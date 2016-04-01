@@ -134,6 +134,8 @@ df_kw <-
 head(df_kw, n = 20)
 dim(df_kw)
 
+sort(df_kw$id)
+
 # Clean the Fields
 df_kw$keyword <- lapply(df_kw$keyword, cleanField)
 head(df_kw, n=10)

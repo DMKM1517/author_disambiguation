@@ -1,3 +1,7 @@
+
+# install.packages("topicmodels")
+# install.packages("RTextTools")
+
 library(stringr)
 require("RPostgreSQL")
 library(reshape)
@@ -5,6 +9,11 @@ library(vegan)
 library(tm)
 library(RTextTools)
 library(topicmodels)
+
+
+
+
+
 
 ######### CONNECTION TO DB ###############
 
@@ -28,14 +37,21 @@ dbExistsTable(con, "articles")
 ###########################################
 
 
-query_words <- "SELECT k.id, concat_ws(', ', 
-lower(k.keywords)::text, lower(a.title::text)) as tt
-FROM
-(SELECT id, string_agg(keyword, ', ') as keywords
-FROM articles_keywords
-GROUP BY id) k, articles a
-WHERE k.id=a.id 
-LIMIT 2000"
+query_words <- 
+    "SELECT 
+        k.id,
+        concat_ws(', ', lower(k.keywords)::text, lower(a.title::text)) as tt
+    FROM
+        (SELECT id, string_agg(keyword, ', ') as keywords
+        FROM articles_keywords
+        GROUP BY id) k,
+        articles a
+    WHERE 
+        k.id = a.id
+        and a.id in (
+            select distinct id
+            from articles_authors_disambiguated
+        )"
 
 # GRAB the article ids and keywords+titles
 
@@ -44,6 +60,7 @@ colnames(df_articlesKwT)<-c("id", "text")
 # test
 # df_articlesKwT[1,]
 # head(df_articlesKwT)
+# dim(df_articlesKwT)
 
 # set article ids as rownames
 
@@ -51,9 +68,9 @@ df_articlesKwT <- data.frame(df_articlesKwT[,-1], row.names=df_articlesKwT[,1])
 head(df_articlesKwT)
 
 # create the DocumentTermMatrix
-
 matrix <- create_matrix(as.vector(df_articlesKwT), language="english", removeNumbers=TRUE, stemWords=TRUE, weighting=weightTf)
 lda <- LDA(matrix, 30) # LDA with 30 topics
+
 terms(lda,5) # 5 most frequent terms of all topics
 
 # gammaDF - relevance of articles to each of the topics
@@ -67,4 +84,11 @@ head(gammaDF)
 toptopics <- as.data.frame(cbind(document = row.names(df_articlesKwT), 
                                  topic = apply(gammaDF,1,function(x) names(gammaDF)[which(x==max(x))])))
 # itest
+names(toptopics) <- c("id", "topic")
 head(toptopics)
+str(toptopics)
+
+#Store the values into the DB
+dbWriteTable(
+    con, "f_article_topic", value = toptopics, append = TRUE, row.names = FALSE
+)
