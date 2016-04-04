@@ -29,7 +29,7 @@ calculateJaccardDistance <- function(df, fun_id_vs_column, column, currentLastNa
     df_bin <- acast(df, formula = fun_id_vs_column, fun.aggregate = length)
     
     # prepare the distance matrix
-    distances <- vegdist(df_bin, method = "euclidean")
+    distances <- vegdist(df_bin, method = "jaccard")
     
     # transform dist type into a matrix
     attributes(distances)$Diag <- FALSE
