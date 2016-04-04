@@ -37,6 +37,7 @@ query_distances <-
         dist_refs,
         dist_subject,
         dist_title,
+        --dist_coauthor,
         same_author
     from v_authors_distance_disambiguated_:TABLE:;"
 #Query for the training set
@@ -51,7 +52,6 @@ rownames(df.train) <- df.train[,1]
 df.train <- df.train[,-1]
 head(df.train, n = 10)
 dim(df.train)
-
 
 # Retreives the training set from the database
 df.test <- dbGetQuery(con, query_distances_testing)
@@ -75,3 +75,6 @@ head(rf$predicted, n=10)
 head(rf$test$predicted, n=20)
 
 confusionMatrix(rf$test$predicted, df_y.test)
+
+dbDisconnect(con)
+dbUnloadDriver(drv)
