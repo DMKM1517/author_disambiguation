@@ -26,6 +26,9 @@ con <- dbConnect(
 rm(pw) # removes the password
 dbExistsTable(con, "articles")
 
+##########################################
+
+
 #query to get the view of distances
 query_distances <- 
     "select 
@@ -53,7 +56,7 @@ df.train <- df.train[,-1]
 head(df.train, n = 10)
 dim(df.train)
 
-# Retreives the training set from the database
+# Retreives the testing set from the database
 df.test <- dbGetQuery(con, query_distances_testing)
 rownames(df.test) <- df.test[,1]
 df.test <- df.test[,-1]
