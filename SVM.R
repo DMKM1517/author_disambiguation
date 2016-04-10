@@ -1,10 +1,10 @@
 
 # install.packages("RPostgreSQL")
-# install.packages("randomForest")
+# install.packages("kernlab")
 # install.packages("caret")
 # install.packages("e1071")
 require("RPostgreSQL")
-library(randomForest)
+library(kernlab)
 library(caret)
 library(stringr)
 
@@ -25,6 +25,7 @@ measures <- function(predicted, actual){
 }
 
 ######################################################
+
 
 
 ######### CONNECTION TO DB ###############
@@ -50,18 +51,18 @@ dbExistsTable(con, "articles")
 
 #query to get the view of distances
 query_distances <- 
-    "select 
-        id1 || '_' || xid1 || '_' || id2 || '_' || xid2 || '_' || last_name as id_distances, 
-        eq_finitial,
-        eq_sinitial,
-        eq_topic,
-        dist_keywords,
-        dist_refs,
-        dist_subject,
-        dist_title,
-        --dist_coauthor,
-        same_author
-    from v_authors_distance_disambiguated_:TABLE:;"
+  "select 
+id1 || '_' || xid1 || '_' || id2 || '_' || xid2 || '_' || last_name as id_distances, 
+eq_finitial,
+eq_sinitial,
+eq_topic,
+dist_keywords,
+dist_refs,
+dist_subject,
+dist_title,
+--dist_coauthor,
+same_author
+from v_authors_distance_disambiguated_:TABLE:;"
 #Query for the training set
 query_distances_training <- str_replace_all(query_distances, ":TABLE:", "training")
 #Query for the testing set
@@ -89,15 +90,28 @@ df_y.train <- as.factor(df.train$same_author)
 df_x.test <- df.test[,1:(length(df.train) - 1)]
 df_y.test <- as.factor(df.test$same_author)
 
+# transform x train as data matrix
+xtr <- df_x.train
+xtr$eq_finitial <- as.factor(xtr$eq_finitial)
+xtr$eq_sinitial <- as.factor(xtr$eq_sinitial)
+xtr$eq_topic <- as.factor(xtr$eq_topic)
+xtr <- data.matrix(xtr)
+# transform x test as data matrix
+xte <- df_x.test
+xte$eq_finitial <- as.factor(xte$eq_finitial)
+xte$eq_sinitial <- as.factor(xte$eq_sinitial)
+xte$eq_topic <- as.factor(xte$eq_topic)
+xte <- data.matrix(xte)
 
-# random forest
-rf <- randomForest(df_x.train, df_y.train, df_x.test, df_y.test)
-# rf$confusion
-# head(rf$predicted, n=10)
-# head(rf$test$predicted, n=20)
+# train the model with Hyperbolic tangent kernel
+svmmod <- ksvm(xtr, df_y.train, type = "C-svc", C = 100, kernel='tanhdot')
+
+# prediction
+svmpre <- predict(svmmod, df_x.test)
 
 # print the measures
-measures(rf$test$predicted, df_y.test)
+measures(svmpre, df_y.test)
+
 
 # disconnect from the database
 dbDisconnect(con)
