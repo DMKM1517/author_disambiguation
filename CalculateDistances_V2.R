@@ -323,10 +323,20 @@ calculateDistancesForFocusName <- function (con, testing, currentLastName) {
     head(df_sub, n = 10)
     dim(df_sub)
     
+    
+    # Clean the Fields
+    df_sub$subject <- lapply(df_sub$subject, cleanField)
+    head(df_sub, n = 20)
+    
+    # Expands the keywords into individual rows
+    df_sub_separated <- data.frame(id=rep(df_sub$id, sapply(df_sub$subject, FUN=length)), subject=unlist(df_sub$subject), stringsAsFactors = FALSE)
+    head(df_sub_separated, n=20)
+    
+    
     # Calculate the distances of the keywords
     fun_id_vs_column = id ~ subject
     dist_sub <-
-        calculateJaccardDistance(df_sub, fun_id_vs_column, "subject", currentLastName)
+        calculateJaccardDistance(df_sub_separated, fun_id_vs_column, "subject", currentLastName)
     
     #Correct the names of the dataframe
     names(dist_sub) <-
@@ -338,6 +348,7 @@ calculateDistancesForFocusName <- function (con, testing, currentLastName) {
     
     #cleanup
     rm(df_sub)
+    rm(df_sub_separated)
     rm(dist_sub) 
     
     

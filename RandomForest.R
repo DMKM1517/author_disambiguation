@@ -36,11 +36,12 @@ query_distances <-
         eq_finitial,
         eq_sinitial,
         eq_topic,
+        diff_year,
         dist_keywords,
         dist_refs,
         dist_subject,
         dist_title,
-        --dist_coauthor,
+        dist_coauthor,
         same_author
     from v_authors_distance_disambiguated_:TABLE:;"
 #Query for the training set
