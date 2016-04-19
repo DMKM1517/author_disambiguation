@@ -1,0 +1,66 @@
+
+
+
+% =================== ARTICLE DEFINITION ===================
+\documentclass[a4paper,10pt]{article}
+%\documentclass[a4paper,twocolumn,10pt]{article}
+\setlength{\oddsidemargin}{0in}
+\setlength{\topmargin}{-.8in}
+\setlength{\textheight}{9.7in} \setlength{\textwidth}{6.5in}
+
+
+
+% ======================== PACKAGES ========================
+\usepackage{subfiles}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{cite}
+\usepackage{multirow}
+\usepackage{listings}
+\usepackage[T1]{fontenc}
+\usepackage{amssymb}
+\usepackage[]{circuitikz}
+%\usepackage{natbib}
+
+
+
+
+
+% ======================= BODY TEXT ========================
+
+\begin{document}
+    
+    \title{Author Disambiguation}
+    \author{Ekaterina Bastrakova, Rodney Ledesma, Jose Millan}
+    \date{\today}
+    \maketitle
+
+    \begin{abstract}
+        \subfile{sections/0_abstract} 
+    \end{abstract}
+    
+    %\tableofcontents
+    
+    \section{Introduction} \label{sec:1_intro}
+    \subfile{sections/1_intro} 
+    
+    \section{Related Work} \label{sec:2_related_work}
+    \subfile{sections/2_related_work} 
+    
+    \section{Implementation} \label{sec:3_implementation}
+    \subfile{sections/3_implementation} 
+        
+    \section{Results} \label{sec:4_results}
+    \subfile{sections/4_results} 
+   
+    \section{Conclusions} \label{sec:5_conclusions}
+    \subfile{sections/5_conclusions} 
+ 
+
+    
+    %\bibliography{test}
+    %\bibliographystyle{plainnat}
+    
+\end{document}}   
+
+ 
