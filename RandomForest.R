@@ -93,9 +93,6 @@ df_y.test <- as.factor(df.test$same_author)
 
 # random forest
 rf <- randomForest(df_x.train, df_y.train, df_x.test, df_y.test)
-# rf$confusion
-# head(rf$predicted, n=10)
-# head(rf$test$predicted, n=20)
 
 # print the measures
 measures(rf$test$predicted, df_y.test)
