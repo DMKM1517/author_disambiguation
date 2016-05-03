@@ -1,9 +1,11 @@
 # install.packages("RPostgreSQL")
 # install.packages("randomForest")
 # install.packages("caret")
+# install.packages("doParallel")
 require("RPostgreSQL")
 library(randomForest)
 library(caret)
+library(doParallel)
 
 ######### CONNECTION TO DB ###############
 
@@ -36,7 +38,7 @@ dist_keywords,
 dist_refs,
 dist_subject,
 dist_title,
---dist_coauthor,
+dist_coauthor,
 same_author
 from v_authors_distance_disambiguated_:TABLE:;"
 #Query for the training set
@@ -64,19 +66,19 @@ dim(df.test)
 df_x.train <- df.train[,1:(length(df.train) - 1)]
 df_y.train <- as.factor(df.train$same_author)
 df_x.test <- df.test[,1:(length(df.train) - 1)]
-df_y.test <- as.numeric(df.test$same_author)
+df_y.test2 <- as.numeric(df.test$same_author)
 
 df_x <- df_x.test
-df_y <- df_y.test
+df_y <- df_y.test2
 
 # sets of number of variables to test
-subsets <- c(2:6)
+subsets <- c(2:8)
 
 # function for rfe
-rfRFE <-  list(summary = defaultSummary,
+rfe_functions <-  list(summary = defaultSummary,
                fit = function(x, y, first, last, ...){
                  library(randomForest)
-                 randomForest(x, y, importance = first, ...)
+                 randomForest(x, as.vector(y), importance = first, ...)
                },
                pred = function(object, x)  predict(object, x),
                rank = function(object, x, y) {
@@ -89,23 +91,28 @@ rfRFE <-  list(summary = defaultSummary,
                selectVar = pickVars)
 
 # options for rfe
-ctrl <- rfeControl(functions = rfRFE,
+rfe_ctrl <- rfeControl(functions = rfe_functions,
                    method = "repeatedcv",
-                   repeats = 5,
+                   repeats = 4,
                    returnResamp = "all",
                    verbose = T)
 
+# parallelize
+cl<-makeCluster(detectCores() - 1)
+registerDoParallel(cl)
+set.seed(1234)
 strt <- Sys.time()
 # recursive feature elimination
-rfProfile <- rfe(df_x, df_y, sizes = subsets, rfeControl = ctrl)
-print("Selection Duration:")
-print(Sys.time()-strt)
+rfe_profile <- rfe(df_x, df_y, sizes = subsets, rfeControl = rfe_ctrl)
+cat("Selection Duration:", Sys.time()-strt)
+stopCluster(cl)
+
 # see results
-rfProfile
+rfe_profile
 
 # plot the results
 trellis.par.set(caretTheme())
-plot1 <- plot(rfProfile, type = c("g", "o"))
-plot2 <- plot(rfProfile, type = c("g", "o"), metric = "Rsquared")
+plot1 <- plot(rfe_profile, type = c("g", "o"))
+plot2 <- plot(rfe_profile, type = c("g", "o"), metric = "Rsquared")
 print(plot1, split=c(1,1,1,2), more=TRUE)
 print(plot2, split=c(1,2,1,2))
