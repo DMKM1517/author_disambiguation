@@ -11,31 +11,34 @@ library(RTextTools)
 library(topicmodels)
 
 
-
-
-
-
 ######### CONNECTION TO DB ###############
 
-
-pw <- {
-  "test"
+#Function that returns the connection to the database
+getDBConnection <- function(){
+    pw <- {
+        "test"
+    }
+    
+    # loads the PostgreSQL driver
+    drv <- dbDriver("PostgreSQL")
+    # creates a connection to the postgres database
+    # note that "con" will be used later in each connection to the database
+    con <- dbConnect(
+        drv, dbname = "ArticlesDB",
+        host = "25.39.131.139", port = 5433,
+        user = "test", password = pw
+    )
+    rm(pw) # removes the password
+    dbExistsTable(con, "articles")
+    #return the connection
+    con
 }
 
-# loads the PostgreSQL driver
-drv <- dbDriver("PostgreSQL")
-# creates a connection to the postgres database
-# note that "con" will be used later in each connection to the database
-con <- dbConnect(
-  drv, dbname = "ArticlesDB",
-  host = "25.39.131.139", port = 5433,
-  user = "test", password = pw
-)
-rm(pw) # removes the password
-dbExistsTable(con, "articles")
 
 ###########################################
 
+# Gets the DB Connection
+con <- getDBConnection()
 
 query_words <- 
     "SELECT 
@@ -43,14 +46,14 @@ query_words <-
         concat_ws(', ', lower(k.keywords)::text, lower(a.title::text)) as tt
     FROM
         (SELECT id, string_agg(keyword, ', ') as keywords
-        FROM articles_keywords
+        FROM public.articles_keywords --TODO: Change schema to source
         GROUP BY id) k,
-        articles a
+        public.articles a --TODO: Change schema to source
     WHERE 
         k.id = a.id
         and a.id in (
             select distinct id
-            from articles_authors_disambiguated
+            from training.articles_authors
         )"
 
 # GRAB the article ids and keywords+titles
@@ -90,5 +93,9 @@ str(toptopics)
 
 #Store the values into the DB
 dbWriteTable(
-    con, "f_article_topic", value = toptopics, append = TRUE, row.names = FALSE
+    con, c("main", "fda_topic"), value = toptopics, append = TRUE, row.names = FALSE
 )
+
+#close the db connection
+dbDisconnect(con)
+

@@ -56,9 +56,9 @@ measures <- function(predicted, actual){
 }
 
 # Function that calculates the clusters based on the distance table of the signatures
-calculateClusters <- function(con, distTable) {
+calculateClusters <- function(con, distTable, tree_cut = 0.5) {
     
-    tree_cut <- 0.5
+    # tree_cut <- 0.5
     # 
     # query_max_cluster <-"
     # select case when max(cluster) is null then 0 else max(cluster) end as max_cluster
@@ -76,7 +76,7 @@ calculateClusters <- function(con, distTable) {
     # distTable <- cbind(str_split_fixed(row.names(rf$test$votes), "_", n=3), (rf$test$votes[,1] ))
     # colnames(distTable) <- c("id1_d1", "id2_d2", "last_name", "dist")
     
-    # distTable<- rf_distTable
+    # distTable<- gbr_distTable
     # distTable <- as.data.frame(distTable, stringsAsFactors = FALSE)
     # distTable$dist <- as.numeric(distTable$dist)
     # head(distTable)
@@ -84,8 +84,9 @@ calculateClusters <- function(con, distTable) {
     # Reshapes the table into a wide format
     distMatrix <- acast(distTable, formula = id1_d1 ~ id2_d2, fun.aggregate = mean, fill = 1)
     
-    clusters <- hclust(as.dist(distMatrix))
+    clusters <- hclust(as.dist(distMatrix), method="ward.D2")
     plot(clusters, cex=0.5)
+    abline(h = tree_cut, lty = 2)
     # head(clusters)
     cut <- as.data.frame(cutree(clusters, h = tree_cut))
     # head(cut)
@@ -97,9 +98,9 @@ calculateClusters <- function(con, distTable) {
     # head(dbClusters, n=30)
     
     #Writes into the table
-    dbSendQuery(con, "TRUNCATE TABLE xref_authors_clusters;")
+    dbSendQuery(con, "TRUNCATE TABLE main.temp_author_clusters;")
     dbWriteTable(
-        con, "xref_authors_clusters", value = dbClusters, append = TRUE, row.names = FALSE
+        con, c("main","temp_author_clusters"), value = dbClusters, append = TRUE, row.names = FALSE
     )
     
     # bring the real cluster
@@ -107,14 +108,14 @@ calculateClusters <- function(con, distTable) {
         "select 
             c.id,
             c.d,
-            ad.authorid as real_cluster,
+            ad.author_id as real_cluster,
             c.cluster as computed_cluster
         from
-            xref_authors_clusters c
-            join xref_articles_authors_disambiguated ad on c.id = ad.id and c.d = ad.d
+            main.temp_author_clusters c
+            join main.authors_disambiguated ad on c.id = ad.id and c.d = ad.d
     ;"
     clusterTest <- dbGetQuery(con, query_cluster_test)
-    
+    dbSendQuery(con, "TRUNCATE TABLE main.temp_author_clusters;")
     
     # Validating results
     results <- cbind(method = "Pairwise", pairwiseMetrics(clusterTest$computed_cluster, clusterTest$real_cluster))
@@ -187,47 +188,100 @@ b3Metrics <- function(r, s){
 
 ######### CONNECTION TO DB ###############
 
-pw <- {
-  "test"
+#Function that returns the connection to the database
+getDBConnection <- function(){
+    pw <- {
+        "test"
+    }
+    
+    # loads the PostgreSQL driver
+    drv <- dbDriver("PostgreSQL")
+    # creates a connection to the postgres database
+    # note that "con" will be used later in each connection to the database
+    con <- dbConnect(
+        drv, dbname = "ArticlesDB",
+        host = "25.39.131.139", port = 5433,
+        user = "test", password = pw
+    )
+    rm(pw) # removes the password
+    dbExistsTable(con, "articles")
+    #return the connection
+    con
 }
-
-# loads the PostgreSQL driver
-drv <- dbDriver("PostgreSQL")
-# creates a connection to the postgres database
-# note that "con" will be used later in each connection to the database
-con <- dbConnect(
-  drv, dbname = "ArticlesDB",
-  host = "25.39.131.139", port = 5433,
-  user = "test", password = pw
-)
-rm(pw) # removes the password
-dbExistsTable(con, "articles")
 
 ##########################################
 
 
 #################### DATA ACQUISITION #######################
 
+# Gets the DB Connection
+con <- getDBConnection()
+
 #query to get the view of distances
-query_distances <- 
-  "select 
-id1 || '-' || d1 || '_' || id2 || '-' || d2 || '_' || last_name as id_distances, 
-eq_finitial,
-eq_sinitial,
-eq_topic,
-diff_year,
-dist_keywords,
-dist_refs,
-dist_subject,
-dist_title,
-dist_coauthor,
-same_author
-from v_authors_distance_disambiguated_:TABLE:;"
+query_distances <- "
+    select 
+        id1 || '-' || d1 || '_' || id2 || '-' || d2 || '_' || focus_name as id_distances, 
+        eq_fn_initial,
+        eq_mn_initial,
+        eq_lda_topic,
+        diff_year,
+        dist_keywords,
+        dist_refs,
+        dist_subject,
+        dist_title,
+        dist_coauthor,
+        same_author
+    from training.v_authors_distance_:TABLE:
+    -- where last_name in (
+    --     select distinct last_name
+    --     from training.v_authors_distance_:TABLE:
+    --     limit 2
+    -- );
+
+;"
 
 #Query for the training set
 query_distances_training <- str_replace_all(query_distances, ":TABLE:", "training")
 #Query for the testing set
 query_distances_testing <- str_replace_all(query_distances, ":TABLE:", "testing")
+
+# #TESTING SAUL's TEST SET
+# #Query for the training set
+# query_distances_training <- "
+#     select
+#         id1 || '-' || d1 || '_' || id2 || '-' || d2 || '_' || focus_name as id_distances, 
+#         eq_finitial,
+#         eq_sinitial,
+#         eq_topic,
+#         diff_year,
+#         dist_keywords,
+#         dist_refs,
+#         dist_subject,
+#         dist_title,
+#         dist_coauthor,
+#         same_author
+#     from
+#         test_testing_set t
+#         right join training.v_authors_distance ad on ((t.id = ad.id1 and t.d = ad.d1) or (t.id = ad.id2 and t.d = ad.d2))
+#     where t.id is null"
+# 
+# #Query for the testing set
+# query_distances_testing <- "
+#     select distinct
+#         id1 || '-' || d1 || '_' || id2 || '-' || d2 || '_' || focus_name as id_distances, 
+#         eq_finitial,
+#         eq_sinitial,
+#         eq_topic,
+#         diff_year,
+#         dist_keywords,
+#         dist_refs,
+#         dist_subject,
+#         dist_title,
+#         dist_coauthor,
+#         same_author
+#     from
+#         test_testing_set t
+#         join v_authors_distance_disambiguated ad on (t.id = ad.id1 and t.d = ad.d1) or (t.id = ad.id2 and t.d = ad.d2)"
 
 
 # Retreives the training set from the database
@@ -254,20 +308,20 @@ df_y.test <- as.factor(df.test$same_author)
 
 # transform x train as data matrix
 xtrain <- df_x.train
-xtrain$eq_finitial <- as.character(xtrain$eq_finitial)
-xtrain$eq_sinitial <- as.character(xtrain$eq_sinitial)
-xtrain$eq_topic <- as.character(xtrain$eq_topic)
+xtrain$eq_finitial <- as.character(xtrain$eq_fn_initial)
+xtrain$eq_sinitial <- as.character(xtrain$eq_mn_initial)
+xtrain$eq_topic <- as.character(xtrain$eq_lda_topic)
 xtrain <- data.matrix(xtrain)
 xtrain2 <- df_x.train
-xtrain2$eq_finitial <- as.factor(xtrain2$eq_finitial)
-xtrain2$eq_sinitial <- as.factor(xtrain2$eq_sinitial)
-xtrain2$eq_topic <- as.factor(xtrain2$eq_topic)
+xtrain2$eq_finitial <- as.factor(xtrain2$eq_fn_initial)
+xtrain2$eq_sinitial <- as.factor(xtrain2$eq_mn_initial)
+xtrain2$eq_topic <- as.factor(xtrain2$eq_lda_topic)
 xtrain2 <- data.matrix(xtrain2)
 # transform x test as data matrix
 xtest <- df_x.test
-xtest$eq_finitial <- as.factor(xtest$eq_finitial)
-xtest$eq_sinitial <- as.factor(xtest$eq_sinitial)
-xtest$eq_topic <- as.factor(xtest$eq_topic)
+xtest$eq_finitial <- as.factor(xtest$eq_fn_initial)
+xtest$eq_sinitial <- as.factor(xtest$eq_mn_initial)
+xtest$eq_topic <- as.factor(xtest$eq_lda_topic)
 xtest <- data.matrix(xtest)
 # transform y train as factor
 ytrain <- as.vector(df_y.train)
@@ -300,7 +354,7 @@ xgb.plot.importance(importance_matrix = importance)
 # model with Hyperbolic tangent kernel
 # svm_model <- ksvm(xtrain2, df_y.train, type = "C-svc", C = 100, kernel='tanhdot')
 # model with Bessel kernel
-# svm_model <- ksvm(xtrain, df_y.train, type = "C-svc", C = 100, kernel='besseldot', prob.model=T)
+# svm_model <- ksvm(xtrain, df_y.train, type = "C-svc", C = 100, kernel='besseldot')
 # model with Bessel kernel (probabilistic)
 svm_model <- ksvm(xtrain, df_y.train, type = "C-svc", C = 100, kernel='besseldot', prob.model=T)
 # prediction
@@ -321,27 +375,35 @@ measures(cvglm_prediction, df_y.test)
 
 ######################## CLUSTERING  ########################
 
+tree_cut <- 0.5
+
 # Random Forest Clustering
 rf_distTable <- cbind(str_split_fixed(row.names(rf_model$test$votes), "_", n=3), (rf_model$test$votes[,1] ))
 colnames(rf_distTable) <- c("id1_d1", "id2_d2", "last_name", "dist")
 rf_distTable <- as.data.frame(rf_distTable, stringsAsFactors = FALSE)
 rf_distTable$dist <- as.numeric(rf_distTable$dist)
-calculateClusters(con, rf_distTable)
+calculateClusters(con, rf_distTable, 0.99)
 
 # Generalized Boosted Regression Clustering
-gbr_distTable <- cbind(rf_distTable[, 1:3], dist = matrix(xgb_prediction,  byrow = T))
+gbr_distTable <- cbind(rf_distTable[, 1:3], dist = matrix((1-xgb_prediction),  byrow = T))
 # head(gbr_distTable)
-calculateClusters(con, gbr_distTable)
+calculateClusters(con, gbr_distTable, tree_cut)
 
 # Support Vector Machines Clustering
-svm_distTable <- cbind(rf_distTable[, 1:3], dist = matrix(svm_prediction[,1],  byrow = T))
+svm_distTable <- cbind(rf_distTable[, 1:3], dist = matrix((1-svm_prediction[,1]),  byrow = T))
 # head(svm_distTable)
-calculateClusters(con, gbr_distTable)
+calculateClusters(con, gbr_distTable, tree_cut)
 
 # Logistic Regression Clustering
-cvglm_distTable <- cbind(rf_distTable[, 1:3], dist = matrix(cvglm_prediction,  byrow = T))
+cvglm_distTable <- cbind(rf_distTable[, 1:3], dist = matrix((1-cvglm_prediction),  byrow = T))
 # head(svm_distTable)
-calculateClusters(con, cvglm_distTable)
+calculateClusters(con, cvglm_distTable, tree_cut)
+
+cvglm_distTable <- cbind(rf_distTable[, 1:3], dist = as.numeric(as.character(rf_model$test$predicted)))
+
+str(rf_model$test$predicted)
+# head(svm_distTable)
+calculateClusters(con, cvglm_distTable, tree_cut)
 
 ######################################################
 
