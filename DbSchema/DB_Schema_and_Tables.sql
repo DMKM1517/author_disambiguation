@@ -26,6 +26,7 @@ CREATE UNIQUE INDEX ON main.articles_authors (id, d);
 CREATE INDEX ON main.articles_authors (author);
 CREATE INDEX ON main.articles_authors (last_name);
 CREATE INDEX ON main.articles_authors (focus_name);
+CREATE INDEX ON main.articles_authors (id, focus_name);
 
 -- Update the cases when the person has only one word in their name
 update main.articles_authors
@@ -63,6 +64,8 @@ CREATE TABLE distances.keywords (
   focus_name varchar(100) DEFAULT NULL,
   PRIMARY KEY (id1, id2, focus_name)
 );
+create index on distances.keywords (id1);
+create index on distances.keywords (id2);
 create index on distances.keywords (id1, id2);
 create index on distances.keywords (focus_name);
 
@@ -74,6 +77,8 @@ CREATE TABLE distances.title (
   focus_name varchar(100) DEFAULT NULL,
   PRIMARY KEY (id1, id2, focus_name)
 );
+create index on distances.title (id1);
+create index on distances.title (id2);
 create index on distances.title (id1, id2);
 create index on distances.title (focus_name);
 
@@ -85,6 +90,8 @@ CREATE TABLE distances.refs (
   focus_name varchar(100) DEFAULT NULL,
   PRIMARY KEY (id1, id2, focus_name)
 );
+create index on distances.refs (id1);
+create index on distances.refs (id2);
 create index on distances.refs (id1, id2);
 create index on distances.refs (focus_name);
 
@@ -96,6 +103,8 @@ CREATE TABLE distances.subject (
   focus_name varchar(100) DEFAULT NULL,
   PRIMARY KEY (id1, id2, focus_name)
 );
+create index on distances.subject (id1);
+create index on distances.subject (id2);
 create index on distances.subject (id1, id2);
 create index on distances.subject (focus_name);
 
@@ -107,6 +116,8 @@ CREATE TABLE distances.coauthor (
   focus_name varchar(100) DEFAULT NULL,
   PRIMARY KEY (id1, id2, focus_name)
 );
+create index on distances.coauthor (id1);
+create index on distances.coauthor (id2);
 create index on distances.coauthor (id1, id2);
 create index on distances.coauthor (focus_name);
 
@@ -139,7 +150,7 @@ from
 	LEFT JOIN distances.refs rf ON tl.id1 = rf.id1 AND tl.id2 = rf.id2 AND tl.focus_name = rf.focus_name
 	LEFT JOIN distances.subject sb ON tl.id1 = sb.id1 AND tl.id2 = sb.id2 AND tl.focus_name = sb.focus_name
 	LEFT JOIN distances.keywords kw ON tl.id1 = kw.id1 AND tl.id2 = kw.id2 AND tl.focus_name = kw.focus_name
-	LEFT JOIN distances.coauthor ca ON ca.id1 = kw.id1 AND ca.id2 = kw.id2 AND tl.focus_name = ca.focus_name;
+	LEFT JOIN distances.coauthor ca ON tl.id1 = ca.id1 AND tl.id2 = ca.id2 AND tl.focus_name = ca.focus_name;
 	
 	
 -- View that joins the authors with the distances of their articles
@@ -214,7 +225,8 @@ select
 	case when vad.dist_refs is null then 1 else vad.dist_refs end as dist_refs,
 	case when vad.dist_subject is null then 1 else vad.dist_subject end as dist_subject,
 	case when vad.dist_title is null then 1 else vad.dist_title end as dist_title,
-	case when vad.dist_coauthor is null then 1 else vad.dist_coauthor end as dist_coauthor
+	case when vad.dist_coauthor is null then 1 else vad.dist_coauthor end as dist_coauthor,
+	case when a1.author_id = a2.author_id then 1 else 0 end as same_author
 from 
 	main.v_articles_distance vad
 	join training.articles_authors a1 on vad.id1 = a1.id and vad.focus_name = a1.focus_name
@@ -224,7 +236,6 @@ from
 	join main.fda_topic topic1 on vad.id1 = topic1.id
 	join main.fda_topic topic2 on vad.id2 = topic2.id;
 	
-
 CREATE VIEW training.v_authors_distance_training AS
 select ad.* 
 from 
@@ -245,3 +256,64 @@ from
 where train.id1 is null;
 
 
+
+--------TESTS---------------------
+select focus_name, count(*)
+from training.articles_authors
+group by focus_name
+order by count(focus_name) desc
+limit 500;
+
+
+select 
+            distinct aa.id, 
+            art.title
+        from
+            training.v_authors_distance aa
+            join public.articles art on aa.id = art.id --TODO: Change schema to source
+        where focus_name = 'BL'
+        order by aa.id;
+        
+        select * 
+from distances.keywords
+limit 500;
+
+
+
+select * 
+from main.v_articles_distance
+limit 500;
+
+select count(distinct id) 
+from main.fda_topic
+limit 500;
+
+select count(distinct id||'_'||d)
+from training.articles_authors
+limit 500;
+
+
+select *
+         from training.v_authors_distance_testing
+         limit 2
+         
+         drop table if exists main.temp_author_clusters;
+         
+         
+ select 
+            c.id,
+            c.d,
+            ad.author_id as real_cluster,
+            c.cluster as computed_cluster
+        from
+            main.temp_author_clusters c
+            join main.authors_disambiguated ad on c.id = ad.id and c.d = ad.d
+
+            
+select * 
+from main.temp_author_clusters
+limit 500;
+
+select * 
+from training.v_authors_distance_testing
+limit 500;
