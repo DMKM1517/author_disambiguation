@@ -97,6 +97,29 @@ sur_race_new <- as.data.frame(sur_race_new)
 sur_race_bin <- acast(sur_race_new, formula = surname ~ bigram, fun.aggregate = length)
 sur_race_bin <- as.data.frame(sur_race_bin)
 
+
+# matrix with all possible bigrams
+
+full_ngram <- data.frame(gtools::permutations(26,2,v=LETTERS,repeats.allowed=T))
+
+full_ngram <- paste(full_ngram[,1], full_ngram[,2])
+
+full_ngram_table <- data.frame(R = 1, bigram = full_ngram)
+full_ngram_table <- acast(full_ngram_table, formula = R ~ bigram, fun.aggregate = length)
+full_ngram_table <- full_ngram_table[0,]
+
+# which columns need to be added
+
+add_bigrams <- colnames(full_ngram_table)[!(colnames(full_ngram_table) %in% colnames(sur_race_bin))]
+
+zeros <- matrix(0, ncol = length(add_bigrams), nrow = length(sur_race_bin[,1]))
+zeros <- as.data.frame(zeros)
+
+colnames(zeros) <- add_bigrams
+
+sur_race_bin <- cbind(sur_race_bin, zeros)
+
+
 # adding soundex and percentage to binary matrix
 
 tmp <- sur_race[c("soundex", "pct")]
