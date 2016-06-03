@@ -50,14 +50,16 @@ measures <- function(predicted, actual){
   cat('\nConfusion matrix:\n')
   print(cm$table)
   cat('\nMeasures:\n')
-  res <- data.frame(cbind(cm$overall['Accuracy'], precision, recall, f_measure), row.names = '1')
-  colnames(res) <- c('Accuracy','Precision','Recall','F1')
+  res <- data.frame(threshold, cbind(cm$overall['Accuracy'], precision, recall, f_measure), row.names = '1')
+  colnames(res) <- c('BestTreshold', 'Accuracy','Precision','Recall','F1')
   print(res)
+  res
 }
 
+
 # Function that calculates the clusters based on the distance table of the signatures
-calculateClusters <- function(con, distTable, tree_cut = 0.5) {
-    
+calculateClusters <- function(con, distTable) {
+
 
     # query_max_cluster <-"
     # select case when max(cluster) is null then 0 else max(cluster) end as max_cluster
@@ -67,37 +69,31 @@ calculateClusters <- function(con, distTable, tree_cut = 0.5) {
     # #Current max number of cluster
     # df.max[1,1]
     df.max <- as.matrix(0)
-    
-    # distTable<- gbr_distTable
-    
+
+    # distTable<- rf_distTable
+
     # Reshapes the table into a wide format
     distMatrix <- acast(distTable, formula = id1_d1 ~ id2_d2, fun.aggregate = mean, fill = 1)
-    
-    # Create the Hierarchical Clustering
-    clusters <- hclust(as.dist(distMatrix), method = "centroid")
-    # str(clusters)
 
-    
-    
+    # Create the Hierarchical Clustering
+    clusters <- hclust(as.dist(distMatrix), method = "complete")
+
     #Values for the loop
     bestModelCut <- NULL
     bestCut <- 0
     bestF1 <- 0
-    
+    maxHeight <- max(clusters$height)
+
     #Drops the temp table if exists
     dbSendQuery(con, "drop table if exists main.temp_author_clusters;")
-    
+
     #Loop that looks for the best cut of the tree
-    for (i in seq(0, 5, by=0.05)) {
-        if(i == 0.05) {
-            print(maxHeight)
-            maxHeight <- max(clusters$height)
-        }
+    for (i in seq(0, ceiling(maxHeight), by=0.05)) {
         if(i>maxHeight)
             break
-        
-        cut <- as.data.frame(cutree(clusters, h = tree_cut))
-        
+
+        cut <- as.data.frame(cutree(clusters, h = i))
+
         # dbClusters <- cbind(str_split_fixed(row.names(cut), "-", n=2), (cut[,1] + df.max[1,1]))
         dbClusters <- cbind(str_split_fixed(row.names(cut), "-", n=2), cut[,1] )
         dbClusters <- as.data.frame(dbClusters, stringsAsFactors=FALSE)
@@ -105,18 +101,18 @@ calculateClusters <- function(con, distTable, tree_cut = 0.5) {
         dbClusters$id <- as.numeric(dbClusters$id)
         dbClusters$d <- as.numeric(dbClusters$d)
         dbClusters$cluster <- as.numeric(dbClusters$cluster)
-        
+
         # str(dbClusters)
         # head(dbClusters, n=30)
-        
+
         #Writes into the table
         dbWriteTable(
             con, c("main","temp_author_clusters"), value = dbClusters, append = TRUE, row.names = FALSE
         )
-        
+
         # bring the real cluster
-        query_cluster_test <- 
-            "select 
+        query_cluster_test <-
+            "select
                 c.id,
                 c.d,
                 ad.author_id as real_cluster,
@@ -126,38 +122,35 @@ calculateClusters <- function(con, distTable, tree_cut = 0.5) {
                 join main.authors_disambiguated ad on c.id = ad.id and c.d = ad.d
         ;"
         clusterTest <- dbGetQuery(con, query_cluster_test)
-        
+
         currentF1 <- pairwiseMetrics(clusterTest$computed_cluster, clusterTest$real_cluster)[1, 3]
-        
-        if(currentF1 > bestF1){
+
+        if(!is.na(currentF1) && currentF1 > bestF1){
             bestF1 <- currentF1
             bestCut <- i
             bestCluster <- clusterTest
             print(paste(i , " - " , currentF1))
-        }else{
-            print(i)
         }
-        
+
         dbSendQuery(con, "truncate table main.temp_author_clusters;")
-        
+
     }
-    
+
     head(bestCluster, n=20)
-    
+
     #Drops the temp table
     dbSendQuery(con, "drop table if exists main.temp_author_clusters;")
-    
-    
+
+
     #Plot the best cluster cut
     plot(clusters, cex=0.5)
     abline(h = bestCut, lty = 2)
-    
-    
+
     # Final Results
-    results <- cbind(method = "Pairwise", pairwiseMetrics(bestCluster$computed_cluster, bestCluster$real_cluster))
-    results <- rbind(results, cbind(method = "B3", b3Metrics(bestCluster$computed_cluster, bestCluster$real_cluster)))
-    results
-    
+    pairwiseResults <- cbind(BestCut = bestCut, Method = "Pairwise", pairwiseMetrics(bestCluster$computed_cluster, bestCluster$real_cluster))
+    b3Results <- cbind(BestCut = bestCut, Method = "B3", b3Metrics(bestCluster$computed_cluster, bestCluster$real_cluster))
+    rbind(pairwiseResults, b3Results)
+
 }
 
 
@@ -177,10 +170,10 @@ getPairsOfClusters <- function(r){
 pairwiseMetrics <- function(r, s){
     pairsR <- getPairsOfClusters(r)
     pairsS <- getPairsOfClusters(s)
-    precision <- length(intersect(pairsR, pairsS)) / length(pairsR)
-    recall <- length(intersect(pairsR, pairsS)) / length(pairsS)
-    f1 <- (2 * precision * recall) / (precision + recall)
-    cbind(precision, recall, f1)
+    Precision <- length(intersect(pairsR, pairsS)) / length(pairsR)
+    Recall <- length(intersect(pairsR, pairsS)) / length(pairsS)
+    F1 <- (2 * Precision * Recall) / (Precision + Recall)
+    cbind(Precision, Recall, F1)
 }
 
 #Function that calculates the B3 precission of a clustering
@@ -211,10 +204,10 @@ b3Recall <- function(r, s){
 
 # Function that calculates the B3 metrics for validating a clustering
 b3Metrics <- function(r, s){
-    precision <- b3Precision(r, s)
-    recall <- b3Recall(r, s)
-    f1 <- (2 * precision * recall) / (precision + recall)
-    cbind(precision, recall, f1)
+    Precision <- b3Precision(r, s)
+    Recall <- b3Recall(r, s)
+    F1 <- (2 * Precision * Recall) / (Precision + Recall)
+    cbind(Precision, Recall, F1)
 }
 
 
@@ -274,21 +267,22 @@ query_distances <- "
         eq_fn_initial,
         eq_mn_initial,
         eq_lda_topic,
-        --diff_year,
+        diff_year,
         dist_keywords,
         dist_refs,
-        --dist_subject,
-        --dist_title,
+        dist_subject,
+        dist_title,
         dist_coauthor,
+        dist_ethnicity,
         same_author
     from training.v_authors_distance_:TABLE:
-     --where focus_name in (
-     --    select focus_name
-     --    from training.v_:TABLE:_focus_names
-     --    limit 2
-     --);
+    --where focus_name in (
+    --    select focus_name
+    --    from training.v_:TABLE:_focus_names
+    --    limit 2
+    --);
 
-;"
+"
 
 #Query for the training set
 query_distances_training <- str_replace_all(query_distances, ":TABLE:", "training")
@@ -340,93 +334,126 @@ ytrain <- as.vector(df_y.train)
 ######################################################
 
 #################### MODELS #######################
+# save.models <- TRUE
+save.models <- TRUE
 
-# Random Forest
+#Table for the results of the first validation
+first.validation <- data.frame(Model = character(0), BestTreshold = numeric(0), Accuracy = numeric(0), Precision = numeric(0),
+                               Recall = numeric(0), F1 = numeric(0), stringsAsFactors = FALSE)
+
+
+#### Random Forest ####
 # model
-rf_model <- randomForest(df_x.train, df_y.train, df_x.test, df_y.test)
+model_rf <- randomForest(df_x.train, df_y.train, df_x.test, df_y.test)
+
+#Save the model if specified
+if(save.models)
+    saveRDS(model_rf, "../models/model_rf.rds")
+
 # measures
-measures(rf_model$test$predicted, df_y.test)
+measures_rf <- measures(model_rf$test$votes[,2], df_y.test)
+first.validation <- rbind(first.validation, cbind(Model= 'RF', measures_rf))
 
-# Generalized Boosted Regression
+#### Generalized Boosted Regression ####
 # model
-xgb_model <- xgboost(xtrain2, ytrain, eta=0.05, max.depth=2, nrounds = 150, objective='binary:logistic')
+model_xgb <- xgboost(xtrain2, ytrain, eta=0.05, max.depth=2, nrounds = 150, objective='binary:logistic')
+
+#Save the model if specified
+if(save.models)
+    saveRDS(model_xgb, "../models/model_xgb.rds")
 
 # predict
-xgb_prediction <- predict(xgb_model, xtest)
+prediction_xgb <- predict(model_xgb, xtest)
 
 # measures
-measures(xgb_prediction, df_y.test)
-    # importance of features
-    importance <- xgb.importance(feature_names = colnames(xtrain), model = xgb_model)
-    # plot importance
-    xgb.plot.importance(importance_matrix = importance)
+measures_xgb <- measures(prediction_xgb, df_y.test)
+first.validation <- rbind(first.validation, cbind(Model= 'XGB', measures_xgb))
 
-strt<-Sys.time()
-# Support Vector Machines
+# importance of features
+importance <- xgb.importance(feature_names = colnames(xtrain), model = model_xgb)
+# plot importance
+xgb.plot.importance(importance_matrix = importance)
+
+
+#### Support Vector Machines ####
+
 # model with Hyperbolic tangent kernel
-# svm_model <- ksvm(xtrain2, df_y.train, type = "C-svc", C = 100, kernel='tanhdot')
+# model_svm <- ksvm(xtrain2, df_y.train, type = "C-svc", C = 100, kernel='tanhdot')
 # model with Bessel kernel
-# svm_model <- ksvm(xtrain, df_y.train, type = "C-svc", C = 100, kernel='besseldot')
+# model_svm <- ksvm(xtrain, df_y.train, type = "C-svc", C = 100, kernel='besseldot')
 # model with Bessel kernel (probabilistic)
-svm_model <- ksvm(xtrain, df_y.train, type = "C-svc", C = 100, kernel='tanhdot', prob.model=T)
-print(Sys.time()-strt)
+model_svm <- ksvm(xtrain, df_y.train, type = "C-svc", C = 100, kernel='besseldot', prob.model=T)
+# model_svm_test <- ksvm(xtrain2, df_y.train[1:200], type = "C-svc", C = 100, kernel='besseldot', prob.model=T)
+
+#Save the model if specified
+if(save.models)
+    saveRDS(model_svm, "../models/model_svm.rds")
 
 # prediction
-svm_prediction <- predict(svm_model, xtest, type = "p")
-print(Sys.time()-strt)
+prediction_svm <- predict(model_svm, xtest, type = "p")
 
 # measures
-measures(svm_prediction[,2], df_y.test)
-print(Sys.time()-strt)
+measures_svm <- measures(prediction_svm[,1], df_y.test) 
+first.validation <- rbind(first.validation, cbind(Model= 'SVM', measures_svm))
 
 
 
-# Logistic Regression
+#### Logistic Regression ####
+
 # model with cross-validation
-cvglm_model <- cv.glmnet(xtrain2, df_y.train, family = 'binomial', keep=TRUE)
+model_cvglm <- cv.glmnet(xtrain2, df_y.train, family = 'binomial', keep=TRUE)
+
+if(save.models)
+    saveRDS(model_cvglm, "../models/model_cvglm.rds")
+
 # predict with the best lambda
-cvglm_prediction <- predict.cv.glmnet(cvglm_model, xtest, type = 'response', s="lambda.min")
+prediction_cvglm <- predict.cv.glmnet(model_cvglm, xtest, type = 'response', s="lambda.min")
 # measures
-measures(cvglm_prediction, df_y.test)
+measures_cvglm <- measures(prediction_cvglm, df_y.test)
+first.validation <- rbind(first.validation, cbind(Model= 'CVGLM', measures_cvglm))
 
-
+print('First Step Validation:')
+print(first.validation)
 
 ######################################################
 
 ######################## CLUSTERING  ########################
 
-tree_cut <- 0.5
+#Table for the results of the second validation
+second.validation <- data.frame(Model = character(0), BestCut = numeric(0), Method = character(0), Precision = numeric(0),
+                               Recall = numeric(0), F1 = numeric(0), stringsAsFactors = FALSE)
 
 # Random Forest Clustering
-rf_distTable <- cbind(str_split_fixed(row.names(rf_model$test$votes), "_", n=3), (rf_model$test$votes[,1] ))
+rf_distTable <- cbind(str_split_fixed(row.names(model_rf$test$votes), "_", n=3), (model_rf$test$votes[,1] ))
 colnames(rf_distTable) <- c("id1_d1", "id2_d2", "last_name", "dist")
 rf_distTable <- as.data.frame(rf_distTable, stringsAsFactors = FALSE)
 rf_distTable$dist <- as.numeric(rf_distTable$dist)
-calculateClusters(con, rf_distTable, 0.99)
+clusResults_rf <- calculateClusters(con, rf_distTable)
+second.validation <- rbind(second.validation, cbind(Model='RF', clusResults_rf))
 
 # Generalized Boosted Regression Clustering
-gbr_distTable <- cbind(rf_distTable[, 1:3], dist = matrix((1-xgb_prediction),  byrow = T))
+xgb_distTable <- cbind(rf_distTable[, 1:3], dist = matrix((1-prediction_xgb),  byrow = T))
 # head(gbr_distTable)
-calculateClusters(con, gbr_distTable, 1.6)
+clusResults_xgb <- calculateClusters(con, xgb_distTable)
+second.validation <- rbind(second.validation, cbind(Model='XGB', clusResults_xgb))
 
 # Support Vector Machines Clustering
-svm_distTable <- cbind(rf_distTable[, 1:3], dist = matrix((1-svm_prediction[,1]),  byrow = T))
+svm_distTable <- cbind(rf_distTable[, 1:3], dist = matrix((1-prediction_svm[,1]),  byrow = T))
 # head(svm_distTable)
-calculateClusters(con, gbr_distTable, tree_cut)
+clusResults_svm <- calculateClusters(con, svm_distTable)
+second.validation <- rbind(second.validation, cbind(Model='SVM', clusResults_svm))
 
 # Logistic Regression Clustering
-cvglm_distTable <- cbind(rf_distTable[, 1:3], dist = matrix((1-cvglm_prediction),  byrow = T))
-# head(svm_distTable)
-calculateClusters(con, cvglm_distTable, tree_cut)
+cvglm_distTable <- cbind(rf_distTable[, 1:3], dist = matrix((1-prediction_cvglm),  byrow = T))
+# head(cvglm_distTable)
+clusResults_cvglm <- calculateClusters(con, cvglm_distTable)
+second.validation <- rbind(second.validation, cbind(Model='CVGLM', clusResults_cvglm))
 
-cvglm_distTable <- cbind(rf_distTable[, 1:3], dist = as.numeric(as.character(rf_model$test$predicted)))
-
-str(rf_model$test$predicted)
-# head(svm_distTable)
-calculateClusters(con, cvglm_distTable, tree_cut)
+print('Second Step Validation:')
+print(second.validation)
 
 ######################################################
 
 # disconnect from the database
 dbDisconnect(con)
-dbUnloadDriver(drv)
+# dbUnloadDriver(drv)

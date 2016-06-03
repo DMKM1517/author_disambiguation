@@ -7,6 +7,7 @@
 #install.packages("splitstackshape")
 #install.packages("foreach")
 #install.packages("doParallel")
+# install.packages("R.utils")
 
 library(stringr)
 require("RPostgreSQL")
@@ -15,6 +16,7 @@ library(vegan)
 library(tm)
 library(splitstackshape)
 
+library(R.utils)
 library(foreach)
 library(doParallel)
 
@@ -76,6 +78,76 @@ writeDistanceTable <- function(con, dbTable, df)
     )
 }
 
+
+# Function that performs a safe upsert into the DB
+safeUpsert <- function(con, data, destTable, id_columns){
+    # data <- final_last_names
+    # destTable <- c('main', 'last_name_ethnicities')
+    # id_column <- 'last_name'
+    # id_columns <- c('id1', 'id2')
+    # data = dist_et, destTable = c("distances", "ethnicity"), id_columns = c("last_name_1", "last_name_2", "focus_name")
+    
+    #load R.utils library (needed otherwise it breaks)
+    library(R.utils)
+    
+    #sets the temp table
+    tempTable <- destTable
+    tempTable[length(tempTable)] <- paste(tempTable[length(tempTable)], ceiling(System$currentTimeMillis()), sep = "_")
+    
+    dbWriteTable(con, tempTable, value = data, row.names = FALSE)
+    
+    query_id_columns <- paste(id_columns, collapse = ", ")
+    query_equal_id_columns <- paste(paste('dest', id_columns, sep='.'), paste('temp', id_columns, sep='.'), sep='=', collapse = " AND ")
+    query_null_id_columns <- paste(paste('dest', id_columns, sep='.'), 'is null', sep=' ', collapse = " AND ")
+    
+    query_dest_table <- paste(destTable, collapse = '.')
+    query_temp_table <- paste(tempTable, collapse = '.')
+    
+    columns <- colnames(data)
+    query_columns <- paste(columns, collapse = ", ")
+    query_temp_columns <- paste('temp', columns, sep='.', collapse = ", ")
+    query_dest_columns <- paste('dest', columns, sep='.', collapse = ", ")
+    
+    query_assign_columns <- paste(columns, paste('temp', columns, sep='.'), sep='=', collapse = ", ")
+    
+    query_upsert <- "
+    CREATE INDEX ON :temp_table: (:id_columns:);
+    
+    UPDATE :dest_table: AS dest 
+    SET 
+        :assign_columns:
+    FROM :temp_table: AS temp
+    WHERE :query_equal_id_columns:;
+    
+    INSERT INTO :dest_table:
+        (:columns:)
+    SELECT 
+        :temp_columns:
+    FROM
+        :dest_table: dest
+        right join :temp_table: temp on :query_equal_id_columns:
+    where
+        :null_id_columns:;
+    "
+    query_upsert <- str_replace_all(query_upsert, ":id_columns:", query_id_columns)
+    query_upsert <- str_replace_all(query_upsert, ":query_equal_id_columns:", query_equal_id_columns)
+    query_upsert <- str_replace_all(query_upsert, ":null_id_columns:", query_null_id_columns)
+    query_upsert <- str_replace_all(query_upsert, ":dest_table:", query_dest_table)
+    query_upsert <- str_replace_all(query_upsert, ":temp_table:", query_temp_table)
+    query_upsert <- str_replace_all(query_upsert, ":assign_columns:", query_assign_columns)
+    query_upsert <- str_replace_all(query_upsert, ":columns:", query_columns)
+    query_upsert <- str_replace_all(query_upsert, ":temp_columns:", query_temp_columns)
+    query_upsert <- str_replace_all(query_upsert, ":dest_column:", query_dest_columns)
+    
+    # cat(query_upsert)
+    dbSendQuery(con, query_upsert)
+    
+    #Drop the temp table
+    query_drop_temp <- str_replace_all("DROP TABLE IF EXISTS :temp_table:;", ":temp_table:", query_temp_table)
+    dbSendQuery(con, query_drop_temp)
+}
+
+
 truncateDistanceTables <- function(con)
 {
     queryTruncate <- "
@@ -83,6 +155,7 @@ truncateDistanceTables <- function(con)
         TRUNCATE TABLE distances.refs;
         TRUNCATE TABLE distances.subject;
         TRUNCATE TABLE distances.title;
+        TRUNCATE TABLE distances.coauthor;
         TRUNCATE TABLE distances.coauthor;"
     dbSendQuery(con, queryTruncate)
 }
@@ -118,7 +191,7 @@ calculateDistancesForFocusName <- function (con, testing, focusName) {
             art.title
         from
             :DISAMBIGUATED:.articles_authors aa
-            join public.articles art on aa.id = art.id --TODO: Change schema to source
+            join source.articles art on aa.id = art.id
         where focus_name = ':FOCUS_NAME:'
         order by aa.id;"
     
@@ -151,11 +224,12 @@ calculateDistancesForFocusName <- function (con, testing, focusName) {
     
     #Correct the names of the dataframe
     names(dist_title) <-
-        c("id1", "id2", "dist_title", "focusName")
+        c("id1", "id2", "dist_title", "focus_name")
     head(dist_title)
     
     #Writes into the table
-    writeDistanceTable(con, c("distances", "title"), dist_title)
+    # writeDistanceTable(con, c("distances", "title"), dist_title)
+    safeUpsert(con, data = dist_title, destTable = c("distances", "title"), id_columns = c("id1", "id2", "focus_name"))
     
     #cleanup
     rm(df_tt)
@@ -172,7 +246,7 @@ calculateDistancesForFocusName <- function (con, testing, focusName) {
             lower(k.keyword) as keyword 
         from
             :DISAMBIGUATED:.articles_authors a
-            join public.articles_keywords k on a.id = k.id --TODO: Change schema to source
+            join source.keywords k on a.id = k.id
         where focus_name = ':FOCUS_NAME:'
         order by a.id;"
     
@@ -209,7 +283,8 @@ calculateDistancesForFocusName <- function (con, testing, focusName) {
     head(dist_keywords)
     
     #Writes into the table
-    writeDistanceTable(con, c("distances", "keywords"), dist_keywords)
+    # writeDistanceTable(con, c("distances", "keywords"), dist_keywords)
+    safeUpsert(con, data = dist_keywords, destTable = c("distances", "keywords"), id_columns = c("id1", "id2", "focus_name"))
     
     #cleanup
     rm(df_kw)
@@ -226,7 +301,7 @@ calculateDistancesForFocusName <- function (con, testing, focusName) {
             refs.journal
         from
             :DISAMBIGUATED:.articles_authors aa
-            join public.articles_refs_clean refs on aa.id = refs.id --TODO: Change schema to source
+            join source.references refs on aa.id = refs.id
         where 
             focus_name = ':FOCUS_NAME:'
         order by aa.id;"
@@ -244,6 +319,13 @@ calculateDistancesForFocusName <- function (con, testing, focusName) {
         dbGetQuery(con, query_ref)
     head(df_ref, n = 10)
     dim(df_ref)
+    
+    # Clean the Fields
+    df_ref$journal <- lapply(df_ref$journal, cleanField)
+    df_ref$journal <- lapply(df_ref$journal, FUN='paste', collapse=" ")
+    df_ref$journal <- sapply(df_ref$journal, '[[', 1)
+    
+    head(df_ref, n=10)
 
     # Calculate the distances of the keywords
     fun_id_vs_column = id ~ journal
@@ -256,7 +338,8 @@ calculateDistancesForFocusName <- function (con, testing, focusName) {
     head(dist_ref)
     
     #Writes into the table
-    writeDistanceTable(con, c("distances", "refs"), dist_ref)
+    # writeDistanceTable(con, c("distances", "refs"), dist_ref)
+    safeUpsert(con, data = dist_ref, destTable = c("distances", "refs"), id_columns = c("id1", "id2", "focus_name"))
     
     #cleanup
     rm(df_ref)
@@ -268,30 +351,15 @@ calculateDistancesForFocusName <- function (con, testing, focusName) {
     
     #query to get the currentAuthor cluster
     query_sub <- 
-        "select distinct *
+        "select
+            distinct aa.id,
+            sub.subject
         from
-            (
-                (select 
-                    distinct aa.id, 
-                    sub.subject
-                from
-                    :DISAMBIGUATED:.articles_authors aa
-                    join public.articles_subjects sub on aa.id = sub.id --TODO: Change schema to source
-                where 
-                    aa.focus_name = ':FOCUS_NAME:'
-                order by aa.id)    
-            UNION
-                (select 
-                    distinct aa.id, 
-                    sub.subject
-                from
-                    :DISAMBIGUATED:.articles_authors aa
-                    join public.subject_asociations sub on aa.id = sub.id --TODO: Change schema to source
-                where 
-                    aa.focus_name = ':FOCUS_NAME:'
-                order by aa.id)    
-            ) subs
-        order by id;"
+            :DISAMBIGUATED:.articles_authors aa
+            join source.subjects sub on aa.id = sub.id
+        where
+            aa.focus_name = ':FOCUS_NAME:'
+        order by aa.id;"
     
     # Replace the focus name and the environment if neccesary
     query_sub <- str_replace_all(query_sub, ":FOCUS_NAME:", focusName)
@@ -328,7 +396,8 @@ calculateDistancesForFocusName <- function (con, testing, focusName) {
     head(dist_sub)
     
     #Writes into the table
-    writeDistanceTable(con, c("distances", "subject"), dist_sub)
+    # writeDistanceTable(con, c("distances", "subject"), dist_sub)
+    safeUpsert(con, data = dist_sub, destTable = c("distances", "subject"), id_columns = c("id1", "id2", "focus_name"))
     
     #cleanup
     rm(df_sub)
@@ -374,12 +443,69 @@ calculateDistancesForFocusName <- function (con, testing, focusName) {
     head(dist_ca)
     
     #Writes into the table
-    writeDistanceTable(con, c("distances", "coauthor"), dist_ca)
+    # writeDistanceTable(con, c("distances", "coauthor"), dist_ca)
+    safeUpsert(con, data = dist_ca, destTable = c("distances", "coauthor"), id_columns = c("id1", "id2", "focus_name"))
+    
     
     #cleanup
     rm(df_ca)
     rm(dist_ca) 
     
+    ######### DISTANCE FOR ETHNICITY ###############
+    print(paste("Starting Distance for Ethnicity: ", focusName))
+    #query to get the ethnicities each author for the current focus name
+    query_et <- 
+        "select distinct
+            aa.last_name,
+            et.aian,
+            et.api, black,
+            et.hispanic,
+            et.tworace,
+            et.white
+        from
+            :DISAMBIGUATED:.articles_authors aa
+            join main.last_name_ethnicities et on aa.last_name = et.last_name
+        where aa.focus_name = ':FOCUS_NAME:' 
+        order by aa.last_name;"
+    
+    # Replace the focus name and the environment if neccesary
+    query_et <- str_replace_all(query_et, ":FOCUS_NAME:", focusName)
+    if(testing){
+        query_et <- str_replace_all(query_et, ":DISAMBIGUATED:", "training")
+    } else {
+        query_et <- str_replace_all(query_et, ":DISAMBIGUATED:", "main")
+    }
+    
+    # Retreives the table from the database
+    df_et <-
+        dbGetQuery(con, query_et)
+    head(df_et, n = 10)
+    dim(df_et)
+    
+    #Melt the table so we have the ethnicities in one column only
+    df_et_molten = melt(df_et, na.rm = TRUE, id = "last_name")
+    df_et_molten[,2] <- paste(df_et_molten[,3], df_et_molten[,2], sep = "_")
+    df_et_molten <- df_et_molten[,1:2]
+    colnames(df_et_molten) <- c('last_name', 'ethnicity')
+    
+    # Calculate the distances of the keywords
+    fun_id_vs_column = last_name ~ ethnicity
+    dist_et <-
+        calculateJaccardDistance(df_et_molten, fun_id_vs_column, "ethnicity", focusName)
+    
+    #Correct the names of the dataframe
+    names(dist_et) <-
+        c("last_name_1", "last_name_2", "dist_ethnicity", "focus_name")
+    head(dist_et)
+    
+    #Writes into the table
+    # writeDistanceTable(con, c("distances", "ethnicity"), dist_et)
+    safeUpsert(con, data = dist_et, destTable = c("distances", "ethnicity"), id_columns = c("last_name_1", "last_name_2", "focus_name"))
+    
+    #cleanup
+    rm(df_et)
+    rm(df_et_molten)
+    rm(dist_et) 
 }
 
 
@@ -390,7 +516,8 @@ calculateDistancesForFocusName <- function (con, testing, focusName) {
 ############# START OF SCRIPT ##################
 
 #assigns the current focus name to cluster
-focusName <- "BL"
+focusName <- "MRTN"
+testing <- TRUE
 
 ######### CONNECTION TO DB ###############
 
@@ -426,7 +553,7 @@ ls<-foreach(
     
     conIter <- getDBConnection()
 
-    calculateDistancesForFocusName(con = conIter, testing = TRUE, focusName = focusName)
+    calculateDistancesForFocusName(con = conIter, testing = testing, focusName = focusName)
     dbDisconnect(conIter)
     # dbUnloadDriver(drvIter)
 }
