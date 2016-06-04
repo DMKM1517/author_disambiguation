@@ -307,7 +307,7 @@ dim(df.test)
 # separate x and y
 df_x.train <- df.train[,1:(length(df.train) - 1)]
 df_y.train <- as.factor(df.train$same_author)
-df_x.test <- df.test[,1:(length(df.train) - 1)]
+df_x.test <- df.test[,1:(length(df.test) - 1)]
 df_y.test <- as.factor(df.test$same_author)
 
 
@@ -331,10 +331,13 @@ xtest <- data.matrix(xtest)
 # transform y train as factor
 ytrain <- as.vector(df_y.train)
 
+# save xtest
+saveRDS(xtest, "../models/xtest.rds")
+
 ######################################################
 
 #################### MODELS #######################
-# save.models <- TRUE
+# save.models <- FALSE
 save.models <- TRUE
 
 #Table for the results of the first validation
@@ -424,6 +427,9 @@ second.validation <- data.frame(Model = character(0), BestCut = numeric(0), Meth
                                Recall = numeric(0), F1 = numeric(0), stringsAsFactors = FALSE)
 
 # Random Forest Clustering
+if (!exists('model_rf')) {
+  model_rf <- readRDS("../models/model_rf.rds")
+}
 rf_distTable <- cbind(str_split_fixed(row.names(model_rf$test$votes), "_", n=3), (model_rf$test$votes[,1] ))
 colnames(rf_distTable) <- c("id1_d1", "id2_d2", "last_name", "dist")
 rf_distTable <- as.data.frame(rf_distTable, stringsAsFactors = FALSE)
@@ -432,18 +438,45 @@ clusResults_rf <- calculateClusters(con, rf_distTable)
 second.validation <- rbind(second.validation, cbind(Model='RF', clusResults_rf))
 
 # Generalized Boosted Regression Clustering
+if (!exists('prediction_xgb')){
+  if (!exists('model_xgb')) {
+    model_xgb <- readRDS("../models/model_xgb.rds")
+  }
+  if (!exists('xtest')) {
+    xtest <- readRDS("../models/xtest.rds")
+  }
+  prediction_xgb <- predict(model_xgb, xtest)
+}
 xgb_distTable <- cbind(rf_distTable[, 1:3], dist = matrix((1-prediction_xgb),  byrow = T))
 # head(gbr_distTable)
 clusResults_xgb <- calculateClusters(con, xgb_distTable)
 second.validation <- rbind(second.validation, cbind(Model='XGB', clusResults_xgb))
 
 # Support Vector Machines Clustering
+if (!exists('prediction_svm')){
+  if (!exists('model_svm')) {
+    model_svm <- readRDS("../models/model_svm.rds")
+  }
+  if (!exists('xtest')) {
+    xtest <- readRDS("../models/xtest.rds")
+  }
+  prediction_svm <- predict(model_svm, xtest, type = "p")
+}
 svm_distTable <- cbind(rf_distTable[, 1:3], dist = matrix((1-prediction_svm[,1]),  byrow = T))
 # head(svm_distTable)
 clusResults_svm <- calculateClusters(con, svm_distTable)
 second.validation <- rbind(second.validation, cbind(Model='SVM', clusResults_svm))
 
 # Logistic Regression Clustering
+if (!exists('prediction_cvglm')){
+  if (!exists('model_cvglm')) {
+    model_cvglm <- readRDS("../models/model_cvglm.rds")
+  }
+  if (!exists('xtest')) {
+    xtest <- readRDS("../models/xtest.rds")
+  }
+  prediction_cvglm <- predict.cv.glmnet(model_cvglm, xtest, type = 'response', s="lambda.min")
+}
 cvglm_distTable <- cbind(rf_distTable[, 1:3], dist = matrix((1-prediction_cvglm),  byrow = T))
 # head(cvglm_distTable)
 clusResults_cvglm <- calculateClusters(con, cvglm_distTable)
