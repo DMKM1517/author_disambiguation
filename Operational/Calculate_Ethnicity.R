@@ -53,6 +53,7 @@ cleanLastName <- function(last_name) {
     # Returns the clean last_name
     t
 }
+
 # Function that performs a safe upsert into the DB
 safeUpsert <- function(con, data, destTable, id_columns){
     # data <- final_last_names

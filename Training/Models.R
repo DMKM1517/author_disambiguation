@@ -56,6 +56,40 @@ measures <- function(predicted, actual){
   res
 }
 
+# Function that calculates the clusters based on the distance table of the signatures with the best cut for each focus name
+calculateClustersByFocusName <- function(con, distTable) {
+    #distTable <- xgb_distTable
+    temp.results <- data.frame(last_name = character(0), BestCut = numeric(0), Method = character(0), Precision = numeric(0),
+                                    Recall = numeric(0), F1 = numeric(0), stringsAsFactors = FALSE)
+    uniqueLastNames <- unique(distTable$last_name)
+    for(i in 1:length(uniqueLastNames)){
+        # i<-10
+        current_last_name <- uniqueLastNames[i]
+        if(nrow(distTable[distTable$last_name == current_last_name, ]) > 1){ #prevents from calculating from lonely signatures
+            current.results <- calculateClusters(con, distTable[distTable$last_name == current_last_name, ])
+            temp.results <- rbind(temp.results,cbind(last_name = current_last_name, current.results))
+        }
+        
+    }
+    #unfactorize the data.frame
+    temp.results <- as.data.frame(lapply(temp.results, as.character), stringsAsFactors = FALSE)
+    
+    rbind(
+        c(
+            Method='Pairwise', 
+            Precision =  mean(as.numeric(temp.results$Precision[temp.results$Method == 'Pairwise'])),
+            Recall =  mean(as.numeric(temp.results$Recall[temp.results$Method == 'Pairwise'])),
+            F1 =  mean(as.numeric(temp.results$F1[temp.results$Method == 'Pairwise']))
+        ), c(
+            Method='B3', 
+            Precision =  mean(as.numeric(temp.results$Precision[temp.results$Method == 'B3'])),
+            Recall =  mean(as.numeric(temp.results$Recall[temp.results$Method == 'B3'])),
+            F1 =  mean(as.numeric(temp.results$F1[temp.results$Method == 'B3']))
+        )
+    )
+       
+}
+
 
 # Function that calculates the clusters based on the distance table of the signatures
 calculateClusters <- function(con, distTable) {
@@ -129,7 +163,7 @@ calculateClusters <- function(con, distTable) {
             bestF1 <- currentF1
             bestCut <- i
             bestCluster <- clusterTest
-            print(paste(i , " - " , currentF1))
+            # print(paste(i , " - " , currentF1))
         }
 
         dbSendQuery(con, "truncate table main.temp_author_clusters;")
@@ -375,7 +409,7 @@ first.validation <- rbind(first.validation, cbind(Model= 'XGB', measures_xgb))
 # importance of features
 importance <- xgb.importance(feature_names = colnames(xtrain), model = model_xgb)
 # plot importance
-xgb.plot.importance(importance_matrix = importance)
+xgb.plot.importance(importance_matrix = importance, numberOfClusters = 8) + ggtitle("Features Importance")
 
 
 #### Support Vector Machines ####
