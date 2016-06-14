@@ -1,0 +1,17 @@
+<section>
+	<h2 ng-bind="name"></h2>
+	
+	<table class="table table-striped">
+		<thead>
+			<tr>
+				<th>Title</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr ng-repeat="doc in documents">
+				<td>{{doc.title}}</td>
+			</tr>
+		</tbody>
+	</table>
+	
+</section>
