@@ -10,8 +10,33 @@ library(caret)
 library(stringr)
 library(reshape2)
 library(fpc)
+library("rjson")
 
+######################################################
 #################### FUNCTIONS #######################
+
+#Function that returns the connection to the database
+getDBConnection <- function(){
+    
+    login <- fromJSON(paste(readLines("../db_login.json"), collapse=""))
+    
+    # loads the PostgreSQL driver
+    drv <- dbDriver("PostgreSQL")
+    
+    # creates a connection to the postgres database
+    con <- dbConnect(
+        drv, dbname = login$dbname,
+        host = login$host,
+        port = login$port,
+        user = login$user,
+        password = login$password
+    )
+    
+    rm(login) # removes the login file
+    
+    #return the connection
+    con
+}
 
 # function to calculate the confusion matrix and print the measures
 measures <- function(predicted, actual){
@@ -27,29 +52,26 @@ measures <- function(predicted, actual){
     print(res)
 }
 
+#################### CHANGE WORKING DIRECTORY #######################
+
+# Changes the working directory to the folder of the current file
+this.dir <- NULL
+tryCatch(this.dir <- dirname(sys.frame(1)$ofile), error = function(e) print('Getting file path from location of the file.'))
+
+if(is.null(this.dir))
+    this.dir <-dirname(rstudioapi::getActiveDocumentContext()$path)
+if(is.null(this.dir)){
+    print("Setting working directory failed. Script might fail to work.")
+}else{
+    setwd(this.dir)
+    print(paste("Working directory changed successfully to: ", this.dir))
+}
+
 ######################################################
 
 
-######### CONNECTION TO DB ###############
-
-pw <- {
-    "test"
-}
-
-# loads the PostgreSQL driver
-drv <- dbDriver("PostgreSQL")
-# creates a connection to the postgres database
-# note that "con" will be used later in each connection to the database
-con <- dbConnect(
-    drv, dbname = "ArticlesDB",
-    host = "25.39.131.139", port = 5433,
-    user = "test", password = pw
-)
-rm(pw) # removes the password
-dbExistsTable(con, "articles")
-
-##########################################
-
+# Gets the connection from the DB
+con <- getDBConnection()
 
 #query to get the view of distances
 query_distances <- 
@@ -169,5 +191,5 @@ calculateClusters <- function(distTable) {
     
     # disconnect from the database
     dbDisconnect(con)
-    dbUnloadDriver(drv)
+    # dbUnloadDriver(drv)
 }

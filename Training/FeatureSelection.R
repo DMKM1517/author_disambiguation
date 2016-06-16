@@ -6,24 +6,68 @@ require("RPostgreSQL")
 library(randomForest)
 library(caret)
 library(doParallel)
+library("rjson")
 
-######### CONNECTION TO DB ###############
+######################################################
+#################### FUNCTIONS #######################
 
-pw <- {
-  "test"
+#Function that returns the connection to the database
+getDBConnection <- function(){
+    
+    login <- fromJSON(paste(readLines("../db_login.json"), collapse=""))
+    
+    # loads the PostgreSQL driver
+    drv <- dbDriver("PostgreSQL")
+    
+    # creates a connection to the postgres database
+    con <- dbConnect(
+        drv, dbname = login$dbname,
+        host = login$host,
+        port = login$port,
+        user = login$user,
+        password = login$password
+    )
+    
+    rm(login) # removes the login file
+    
+    #return the connection
+    con
 }
 
-# loads the PostgreSQL driver
-drv <- dbDriver("PostgreSQL")
-# creates a connection to the postgres database
-# note that "con" will be used later in each connection to the database
-con <- dbConnect(
-  drv, dbname = "ArticlesDB",
-  host = "25.39.131.139", port = 5433,
-  user = "test", password = pw
-)
-rm(pw) # removes the password
-dbExistsTable(con, "articles")
+
+#################### CHANGE WORKING DIRECTORY #######################
+
+# Changes the working directory to the folder of the current file
+this.dir <- NULL
+tryCatch(this.dir <- dirname(sys.frame(1)$ofile), error = function(e) print('Getting file path from location of the file.'))
+
+if(is.null(this.dir))
+    this.dir <-dirname(rstudioapi::getActiveDocumentContext()$path)
+if(is.null(this.dir)){
+    print("Setting working directory failed. Script might fail to work.")
+}else{
+    setwd(this.dir)
+    print(paste("Working directory changed successfully to: ", this.dir))
+}
+
+######### START OF THE SCRIPT ###############
+
+# Gets the connection from the DB
+con <- getDBConnection()
+
+
+# Changes the working directory to the folder of the current file
+this.dir <- NULL
+tryCatch(this.dir <- dirname(sys.frame(1)$ofile), error = function(e) print('Getting file path from location of the file.'))
+
+if(is.null(this.dir))
+    this.dir <-dirname(rstudioapi::getActiveDocumentContext()$path)
+if(is.null(this.dir)){
+    print("Setting working directory failed. Script might fail to work.")
+}else{
+    setwd(this.dir)
+    print(paste("Working directory changed successfully to: ", this.dir))
+}
 
 #########################################
 
@@ -116,3 +160,6 @@ plot1 <- plot(rfe_profile, type = c("g", "o"))
 plot2 <- plot(rfe_profile, type = c("g", "o"), metric = "Rsquared")
 print(plot1, split=c(1,1,1,2), more=TRUE)
 print(plot2, split=c(1,2,1,2))
+
+# disconnect from the database
+dbDisconnect(con)

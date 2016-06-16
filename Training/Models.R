@@ -19,8 +19,34 @@ library(kernlab)
 library(reshape2)
 library(fpc)
 library(combinat)
+library("rjson")
 
+
+######################################################
 #################### FUNCTIONS #######################
+
+#Function that returns the connection to the database
+getDBConnection <- function(){
+    
+    login <- fromJSON(paste(readLines("../db_login.json"), collapse=""))
+    
+    # loads the PostgreSQL driver
+    drv <- dbDriver("PostgreSQL")
+    
+    # creates a connection to the postgres database
+    con <- dbConnect(
+        drv, dbname = login$dbname,
+        host = login$host,
+        port = login$port,
+        user = login$user,
+        password = login$password
+    )
+    
+    rm(login) # removes the login file
+    
+    #return the connection
+    con
+}
 
 # function to calculate the confusion matrix and print the measures
 measures <- function(predicted, actual){
@@ -249,37 +275,12 @@ b3Metrics <- function(r, s){
 ######################################################
 
 
-
-######### CONNECTION TO DB ###############
-
-#Function that returns the connection to the database
-getDBConnection <- function(){
-    pw <- {
-        "test"
-    }
-    
-    # loads the PostgreSQL driver
-    drv <- dbDriver("PostgreSQL")
-    # creates a connection to the postgres database
-    # note that "con" will be used later in each connection to the database
-    con <- dbConnect(
-        drv, dbname = "ArticlesDB",
-        host = "25.39.131.139", port = 5433,
-        user = "test", password = pw
-    )
-    rm(pw) # removes the password
-    dbExistsTable(con, "articles")
-    #return the connection
-    con
-}
-
-##########################################
-
 #################### CHANGE WORKING DIRECTORY #######################
 
-# Changes the working directory to the one of the current file
+# Changes the working directory to the folder of the current file
 this.dir <- NULL
-this.dir <- dirname(sys.frame(1)$ofile)
+tryCatch(this.dir <- dirname(sys.frame(1)$ofile), error = function(e) print('Getting file path from location of the file.'))
+
 if(is.null(this.dir))
     this.dir <-dirname(rstudioapi::getActiveDocumentContext()$path)
 if(is.null(this.dir)){

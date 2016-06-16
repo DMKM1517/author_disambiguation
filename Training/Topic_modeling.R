@@ -9,35 +9,37 @@ library(vegan)
 library(tm)
 library(RTextTools)
 library(topicmodels)
+library("rjson")
 
-
-######### CONNECTION TO DB ###############
+######################################################
+#################### FUNCTIONS #######################
 
 #Function that returns the connection to the database
 getDBConnection <- function(){
-    pw <- {
-        "test"
-    }
+    
+    login <- fromJSON(paste(readLines("../db_login.json"), collapse=""))
     
     # loads the PostgreSQL driver
     drv <- dbDriver("PostgreSQL")
+    
     # creates a connection to the postgres database
-    # note that "con" will be used later in each connection to the database
     con <- dbConnect(
-        drv, dbname = "ArticlesDB",
-        host = "25.39.131.139", port = 5433,
-        user = "test", password = pw
+        drv, dbname = login$dbname,
+        host = login$host,
+        port = login$port,
+        user = login$user,
+        password = login$password
     )
-    rm(pw) # removes the password
-    dbExistsTable(con, "articles")
+    
+    rm(login) # removes the login file
+    
     #return the connection
     con
 }
 
+######### START OF THE SCRIPT ###############
 
-###########################################
-
-# Gets the DB Connection
+# Gets the connection from the DB
 con <- getDBConnection()
 
 query_words <- 

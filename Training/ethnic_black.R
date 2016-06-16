@@ -18,17 +18,17 @@ library(randomForest)
 
 #################### CHANGE WORKING DIRECTORY #######################
 
-
-# Changes the working directory to the one of the current file
+# Changes the working directory to the folder of the current file
 this.dir <- NULL
-this.dir <- dirname(sys.frame(1)$ofile)
+tryCatch(this.dir <- dirname(sys.frame(1)$ofile), error = function(e) print('Getting file path from location of the file.'))
+
 if(is.null(this.dir))
-  this.dir <-dirname(rstudioapi::getActiveDocumentContext()$path)
+    this.dir <-dirname(rstudioapi::getActiveDocumentContext()$path)
 if(is.null(this.dir)){
-  print("Setting working directory failed. Script might fail to work.")
+    print("Setting working directory failed. Script might fail to work.")
 }else{
-  setwd(this.dir)
-  print(paste("Working directory changed successfully to: ", this.dir))
+    setwd(this.dir)
+    print(paste("Working directory changed successfully to: ", this.dir))
 }
 
 
