@@ -37,6 +37,21 @@ getDBConnection <- function(){
     con
 }
 
+#################### CHANGE WORKING DIRECTORY #######################
+
+# Changes the working directory to the folder of the current file
+this.dir <- NULL
+tryCatch(this.dir <- dirname(sys.frame(1)$ofile), error = function(e) print('Getting file path from location of the file.'))
+
+if(is.null(this.dir))
+    this.dir <-dirname(rstudioapi::getActiveDocumentContext()$path)
+if(is.null(this.dir)){
+    print("Setting working directory failed. Script might fail to work.")
+}else{
+    setwd(this.dir)
+    print(paste("Working directory changed successfully to: ", this.dir))
+}
+
 ######### START OF THE SCRIPT ###############
 
 # Gets the connection from the DB
@@ -48,9 +63,9 @@ query_words <-
         concat_ws(', ', lower(k.keywords)::text, lower(a.title::text)) as tt
     FROM
         (SELECT id, string_agg(keyword, ', ') as keywords
-        FROM public.articles_keywords --TODO: Change schema to source
+        FROM source.keywords
         GROUP BY id) k,
-        public.articles a --TODO: Change schema to source
+        source.articles a
     WHERE 
         k.id = a.id
         and a.id in (
@@ -74,7 +89,7 @@ head(df_articlesKwT)
 
 # create the DocumentTermMatrix
 matrix <- create_matrix(as.vector(df_articlesKwT), language="english", removeNumbers=TRUE, stemWords=TRUE, weighting=weightTf)
-lda <- LDA(matrix, 10) # LDA with 30 topics
+lda <- LDA(matrix, 10) # LDA with 10 topics
 
 terms(lda,5) # 5 most frequent terms of all topics
 
