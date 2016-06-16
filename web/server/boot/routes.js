@@ -1,7 +1,8 @@
 module.exports = function(app) {
 	'use strict';
 
-	var config = JSON.parse(require('fs').readFileSync(__dirname + '/../../config.json'));
+	var fs = require('fs');
+	var config = JSON.parse(fs.readFileSync(__dirname + '/../../config.json'));
 	var oauth2 = require('simple-oauth2')({
 		site: 'https://api.mendeley.com',
 		clientID: config.clientId,
@@ -14,7 +15,8 @@ module.exports = function(app) {
 	var oauthPath = '/oauth';
 	// var examplesPath = '/examples';
 	var tokenExchangePath = '/oauth/token-exchange';
-	var redirectUri = 'http://localhost:3000' + tokenExchangePath;
+	var port = JSON.parse(fs.readFileSync(__dirname + '/../config.json')).port;
+	var redirectUri = 'http://' + config.localhostUrl + ':' + port + tokenExchangePath;
 
 	app.get('/login', function(req, res) {
 		res.clearCookie(accessTokenCookieName);
