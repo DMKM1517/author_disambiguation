@@ -1,6 +1,99 @@
-<section>
-<h1>HOME</h1>
+<h1>DISAMBIGUATE AUTHORS</h1>
+<br>
 
-<a href="/login">Login</a>
+<div class="col-sm-6">
+	<form>
+		<div class="form-group">
+			<label for="title">Title</label>
+			<input type="text" class="form-control" id="title" placeholder="Title" ng-model="article.title" required>
+		</div>
+		<div class="form-group">
+			<label for="author_lastname">Authors</label>
+			<div class="inline">
+				<div class="col-xs-4">
+					<input type="text" class="form-control" id="author_lastname" placeholder="Last name" ng-model="lastname">
+				</div>
+				<div class="col-xs-3">
+					<input type="text" class="form-control" id="author_firstname" placeholder="First name" ng-model="firstname">
+				</div>
+				<div class="col-xs-3">
+					<input type="text" class="form-control" id="author_middlename" placeholder="Middle name" ng-model="middlename">
+				</div>
+				<div class="col-xs-2">
+					<button class="btn btn-default" ng-click="addAuthor($event)">
+					<i class="glyphicon glyphicon-plus"></i>
+				</button>
+				</div>
+			</div>
+			<div class="cont-authors">
+				<table class="table table-hover">
+					<thead>
+						<tr>
+							<th>Last name</th>
+							<th>First name</th>
+							<th>Middle name</th>
+							<th>&nbsp;</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr ng-repeat="(key, author) in article.authors">
+							<td>{{author.last_name}}</td>
+							<td>{{author.first_name}}</td>
+							<td>{{author.middle_name}}</td>
+							<td>
+								<div class="remove" ng-click="removeAuthor(key)"><i class="glyphicon glyphicon-remove"></i></div>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+		</div>
+		<div class="form-group">
+			<label for="keywords">Keywords</label>
+			<selectize placeholder="Keywords" config="config_selectize" options="options_selectize" ng-model="article.keywords" required="true"></selectize>
+		</div>
+		<div class="form-group">
+			<label for="subject">Subject</label>
+			<select class="form-control" ng-model="article.subject">
+				<option value="" disabled selected>Select a subject</option>
+				<option>Physics</option>
+				<option>Engineering</option>
+				<option>Biology</option>
+			</select>
+		</div>
+		<div class="form-group">
+			<label for="year">Year</label>
+			<input type="number" min="1900" max="2100" class="form-control" ng-model="article.year" />
+		</div>
+		<button type="submit" class="btn btn-default" ng-click="submit($event)">Submit</button>
+	</form>
+</div>
 
-</section>
+<div class="col-sm-6">
+	<a href="/login" ng-if="!logged_in">Login with Mendeley</a>
+	<div ng-if="logged_in">
+		<h2 ng-bind="name"></h2>
+		<!--<form>
+			<div class="form-group">
+				<label for="file">File</label>
+				<input type="file" id="file" custom-on-change="loadFile">
+				<p class="help-block">Upload a PDF file</p>
+			</div>
+		</form>-->
+		<label>Select an article</label>
+		<div class="cont-table">
+			<table class="table table-hover">
+				<thead>
+					<tr>
+						<th></th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr ng-repeat="(key, doc) in documents">
+						<td id="d{{key}}" class="document" ng-click="selectDocument(key)">{{doc.title}}</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+	</div>
+</div>

@@ -31,7 +31,6 @@ module.exports = function(app) {
 	});
 
 	app.get(tokenExchangePath, function(req, res, next) {
-		console.log('Starting token exchange');
 		var code = req.query.code;
 		oauth2.authCode.getToken({
 			redirect_uri: redirectUri,
@@ -49,7 +48,7 @@ module.exports = function(app) {
 
 	function setCookies(res, token) {
 		res.cookie(accessTokenCookieName, token.access_token, {
-			maxAge: token.expires_in * 1000 * 5
+			maxAge: token.expires_in * 1000 * 12
 		});
 		// res.cookie(refreshTokenCookieName, token.refresh_token, {
 		// 	httpOnly: true

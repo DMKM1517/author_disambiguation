@@ -1,20 +1,16 @@
 var App = angular.module('app', [
 	'ui.router',
-	'ngCookies'
+	'ngCookies',
+	'selectize'
 ]);
 
 
 App.config(['$stateProvider', '$urlRouterProvider', function($stateProvider, $urlRouterProvider) {
 	$stateProvider
-		.state('home', {
-			url: '/home',
+		.state('/', {
+			url: '/',
 			templateUrl: 'templates/home.html',
 			controller: 'HomeController'
-		})
-		.state('documents', {
-			url: '/documents',
-			templateUrl: 'templates/documents.html',
-			controller: 'DocumentsController'
 		});
-	$urlRouterProvider.otherwise('home');
+	$urlRouterProvider.otherwise('/');
 }]);

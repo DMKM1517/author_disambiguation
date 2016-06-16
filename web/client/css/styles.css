@@ -1,0 +1,27 @@
+.cont-table {
+	max-height: 60vh;
+	overflow: auto;
+}
+.cont-authors {
+	max-height: 27vh;
+	overflow: auto;
+	clear: both;
+}
+
+.document {
+	cursor: pointer;
+}
+
+.remove {
+	cursor: pointer;
+}
+
+.inline .col-xs-2{
+    padding: 0 5px;
+}
+.inline .col-xs-3{
+    padding: 0 5px;
+}
+.inline .col-xs-4{
+    padding: 0 5px;
+}
