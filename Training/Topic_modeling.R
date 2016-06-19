@@ -58,20 +58,20 @@ if(is.null(this.dir)){
 con <- getDBConnection()
 
 query_words <- 
-    "SELECT 
-        k.id,
-        concat_ws(', ', lower(k.keywords)::text, lower(a.title::text)) as tt
-    FROM
-        (SELECT id, string_agg(keyword, ', ') as keywords
-        FROM source.keywords
-        GROUP BY id) k,
-        source.articles a
-    WHERE 
-        k.id = a.id
-        and a.id in (
-            select distinct id
-            from training.articles_authors
-        )"
+"SELECT distinct sub.id, sub.tt FROM
+(SELECT 
+k.id, s.subject,
+concat_ws(', ', lower(k.keywords)::text, lower(a.title::text)) as tt
+FROM
+(SELECT id, string_agg(keyword, ', ') as keywords
+FROM source.keywords
+GROUP BY id) k,
+source.articles a,
+source.subjects s
+TABLESAMPLE bernoulli(10)
+WHERE 
+k.id = a.id
+and k.id = s.id) sub"
 
 # GRAB the article ids and keywords+titles
 
