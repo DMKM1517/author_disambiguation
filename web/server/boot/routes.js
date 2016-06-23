@@ -1,7 +1,7 @@
 module.exports = function(app) {
 	'use strict';
 
-	var fs = require('fs');
+	const fs = require('fs');
 	var config = JSON.parse(fs.readFileSync(__dirname + '/../../config.json'));
 	var oauth2 = require('simple-oauth2')({
 		site: 'https://api.mendeley.com',
@@ -25,7 +25,7 @@ module.exports = function(app) {
 	});
 
 	app.get(oauthPath, function(req, res) {
-		var authorizationUri = oauth2.authCode.authorizeURL({
+		let authorizationUri = oauth2.authCode.authorizeURL({
 			redirect_uri: redirectUri,
 			scope: config.scope || 'all'
 		});
@@ -47,6 +47,15 @@ module.exports = function(app) {
 			}
 		});
 	});
+
+	app.get('/getSubjects', function(req, res) {
+		let query = `select distinct subject
+			from source.subjects
+			order by subject;`;
+		app.dataSources.ArticlesDB.connector.execute(query, function(err, results) {
+			res.json(results);
+		});
+	})
 
 	function setCookies(res, token) {
 		res.cookie(accessTokenCookieName, token.access_token, {

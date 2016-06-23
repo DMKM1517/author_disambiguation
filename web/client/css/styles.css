@@ -25,3 +25,11 @@
 .inline .col-xs-4{
     padding: 0 5px;
 }
+.inline .col-xs-5{
+    padding: 0 5px;
+}
+
+.results {
+	list-style: none;
+	padding: 0;
+}

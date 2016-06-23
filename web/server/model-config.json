@@ -31,5 +31,11 @@
   "Role": {
     "dataSource": "db",
     "public": false
+  },
+  "Article": {
+    "dataSource": "ArticlesDB",
+    "public": true,
+    "$promise": {},
+    "$resolved": true
   }
 }

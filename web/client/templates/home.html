@@ -1,4 +1,4 @@
-<h1>DISAMBIGUATE AUTHORS</h1>
+<h1>DISAMBIGUATE AUTHORS <a href="#/about"><i class="glyphicon glyphicon-question-sign"></i></a></h1>
 <br>
 
 <div class="col-sm-6">
@@ -14,27 +14,27 @@
 					<input type="text" class="form-control" id="author_lastname" placeholder="Last name" ng-model="lastname">
 				</div>
 				<div class="col-xs-3">
-					<input type="text" class="form-control" id="author_firstname" placeholder="First name" ng-model="firstname">
+					<input type="text" class="form-control" placeholder="First name" ng-model="firstname">
 				</div>
 				<div class="col-xs-3">
-					<input type="text" class="form-control" id="author_middlename" placeholder="Middle name" ng-model="middlename">
+					<input type="text" class="form-control" placeholder="Middle name" ng-model="middlename">
 				</div>
 				<div class="col-xs-2">
 					<button class="btn btn-default" ng-click="addAuthor($event)">
 					<i class="glyphicon glyphicon-plus"></i>
-				</button>
+					</button>
 				</div>
 			</div>
 			<div class="cont-authors">
 				<table class="table table-hover">
-					<thead>
+					<!--<thead>
 						<tr>
 							<th>Last name</th>
 							<th>First name</th>
 							<th>Middle name</th>
 							<th>&nbsp;</th>
 						</tr>
-					</thead>
+					</thead>-->
 					<tbody>
 						<tr ng-repeat="(key, author) in article.authors">
 							<td>{{author.last_name}}</td>
@@ -54,46 +54,113 @@
 		</div>
 		<div class="form-group">
 			<label for="subject">Subject</label>
-			<select class="form-control" ng-model="article.subject">
-				<option value="" disabled selected>Select a subject</option>
-				<option>Physics</option>
-				<option>Engineering</option>
-				<option>Biology</option>
-			</select>
+			<selectize placeholder="Subjects" config="config_selectize2" options="options_selectize2" ng-model="article.subjects" required="true"></selectize>
+		</div>
+		<div class="form-group">
+			<label for="journal">Journal</label>
+			<input type="text" class="form-control" id="journal" ng-model="article.journal" placeholder="Journal" />
 		</div>
 		<div class="form-group">
 			<label for="year">Year</label>
-			<input type="number" min="1900" max="2100" class="form-control" ng-model="article.year" />
+			<input type="number" min="1900" max="2100" id="year" class="form-control" ng-model="article.year" placeholder="2016" />
+		</div>
+		<div class="form-group">
+			<label for="title_reference">References</label>
+			<div class="inline">
+				<div class="col-xs-5">
+					<input type="text" class="form-control" id="title_reference" placeholder="Title of reference" ng-model="title_reference">
+				</div>
+				<div class="col-xs-5">
+					<input type="text" class="form-control" placeholder="Journal of reference" ng-model="journal_reference">
+				</div>
+				<div class="col-xs-2">
+					<button class="btn btn-default" ng-click="addReference($event)">
+					<i class="glyphicon glyphicon-plus"></i>
+					</button>
+				</div>
+			</div>
+			<div class="cont-authors">
+				<table class="table table-hover">
+					<!--<thead>
+						<tr>
+							<th>Title</th>
+							<th>Journal</th>
+							<th>&nbsp;</th>
+						</tr>
+					</thead>-->
+					<tbody>
+						<tr ng-repeat="(key, reference) in article.references">
+							<td>{{reference.title}}</td>
+							<td>{{reference.journal}}</td>
+							<td>
+								<div class="remove" ng-click="removeReference(key)"><i class="glyphicon glyphicon-remove"></i></div>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
 		</div>
 		<button type="submit" class="btn btn-default" ng-click="submit($event)">Submit</button>
 	</form>
 </div>
 
 <div class="col-sm-6">
-	<a href="/login" ng-if="!logged_in">Login with Mendeley</a>
-	<div ng-if="logged_in">
-		<h2 ng-bind="name"></h2>
-		<!--<form>
+	<uib-accordion>
+		<uib-accordion-group is-open="mendeley_opened">
+			<uib-accordion-heading>
+				Mendeley <i class="pull-right glyphicon" ng-class="{'glyphicon-chevron-down': mendeley_opened, 'glyphicon-chevron-right': !mendeley_opened}"></i>
+			</uib-accordion-heading>
+			<a href="/login" ng-if="!logged_in">Login with Mendeley</a>
+			<div ng-if="logged_in">
+				<h2 ng-bind="name"></h2>
+				<!--<form>
 			<div class="form-group">
 				<label for="file">File</label>
 				<input type="file" id="file" custom-on-change="loadFile">
 				<p class="help-block">Upload a PDF file</p>
 			</div>
 		</form>-->
-		<label>Select an article</label>
-		<div class="cont-table">
-			<table class="table table-hover">
+				<label>Select an article</label>
+				<div class="cont-table">
+					<table class="table table-hover">
+						<thead>
+							<tr>
+								<th></th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr ng-repeat="(key, doc) in documents">
+								<td id="d{{key}}" class="document" ng-click="selectDocument(key)">{{doc.title}}</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</uib-accordion-group>
+		<uib-accordion-group is-open="results_opened">
+			<uib-accordion-heading>
+				Results <i class="pull-right glyphicon" ng-class="{'glyphicon-chevron-down': results_opened, 'glyphicon-chevron-right': !results_opened}"></i>
+			</uib-accordion-heading>
+			<table class="table table-striped">
 				<thead>
 					<tr>
-						<th></th>
+						<th>Author</th>
+						<th>Articles</th>
 					</tr>
 				</thead>
 				<tbody>
-					<tr ng-repeat="(key, doc) in documents">
-						<td id="d{{key}}" class="document" ng-click="selectDocument(key)">{{doc.title}}</td>
+					<tr ng-repeat="result in results">
+						<td>{{result.author}}</td>
+						<td>
+							<ul class="results">
+								<li ng-repeat="article in result.articles">
+									{{article}}
+								</li>
+							</ul>
+						</td>
 					</tr>
 				</tbody>
 			</table>
-		</div>
-	</div>
+		</uib-accordion-group>
+	</uib-accordion>
 </div>

@@ -10,7 +10,7 @@ To run:
 {
 	"clientId": ****,
 	"clientSecret": "<secret>",
-	"localhostUrl": "localhost"
+	"localhostUrl": "<localhost or IP>"
 }
 ```
  - Run the application
