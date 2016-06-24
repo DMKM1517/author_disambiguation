@@ -564,14 +564,15 @@ testing <- FALSE
 con <- getDBConnection()
 
 # Query to retrieve all focus names
-queryFN <- 
-    "select 
+queryFN <- "
+    select 
         focus_name,
         count(focus_name)
     from :DISAMBIGUATED:.articles_authors
     group by focus_name
     order by count(focus_name) desc
-    limit 8"
+    limit 8
+    offset 100"
 
 # Replace the focus name and the environment if neccesary
 if(testing){
@@ -587,11 +588,10 @@ head(focusNames, n = 20)
 #Truncate all the distance tables
 # truncateDistanceTables(con)
 
-#setup parallel backend to use 8 processors
-cl<-makeCluster(detectCores() - 1)
-registerDoParallel(cl)
-
-
+# #setup parallel backend to use 8 processors
+# cl<-makeCluster(detectCores() - 1)
+# registerDoParallel(cl)
+#
 # #Parallel Loop
 # strt<-Sys.time()
 # ls<-foreach(
