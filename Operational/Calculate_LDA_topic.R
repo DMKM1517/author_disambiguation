@@ -126,18 +126,19 @@ if(is.null(this.dir)){
 # Gets the connection from the DB
 con <- getDBConnection()
 
-query2 <- "SELECT 
-k.id, 
-concat_ws(', ', lower(k.keywords)::text, lower(a.title::text)) as tt
+query2 <- "
+SELECT 
+    a.id, 
+    concat_ws(', ', lower(k.keywords)::text, lower(a.title::text)) as tt
 FROM
-	(SELECT id, string_agg(keyword, ', ') as keywords
-	FROM source.keywords
-	GROUP BY id) k
-	JOIN source.articles a ON k.id = a.id
-	LEFT JOIN main.fda_topic f ON k.id = f.id
+    source.articles a
+    left JOIN (SELECT id, string_agg(keyword, ', ') as keywords
+        FROM source.keywords
+        GROUP BY id) k ON k.id = a.id
+    LEFT JOIN main.fda_topic f ON a.id = f.id
 WHERE 
-f.topic IS NULL
-LIMIT 500;"
+    f.topic IS NULL
+LIMIT 2000;"
 
 df_articlesTEST <- dbGetQuery(con, query2)
 colnames(df_articlesTEST)<-c("id", "text")
@@ -158,6 +159,7 @@ lda <- readRDS("../models/LDA_model.rds")
 
 # create the DocumentTermMatrix
 matrix2 <- create_matrix(as.vector(df_articlesTEST), language="english", removeNumbers=TRUE, stemWords=TRUE, weighting=weightTf)
+
 lda_pred <- posterior(lda, matrix2) # LDA with 10 topics
 #print(lda_pred)
 
@@ -165,13 +167,12 @@ lda_pred <- posterior(lda, matrix2) # LDA with 10 topics
 # toptopics - which article corresponds most to which topic
 
 toptopics_TEST <- data.frame(cbind(document = row.names(df_articlesTEST), 
-                                      topic = apply(lda_pred$topics,1,function(x) rownames(lda_pred$topics)[which(x==max(x))])), stringsAsFactors = F)
+                                      topic = apply(lda_pred$topics,1,function(x) rownames(lda_pred$topics)[which(x==max(x))] [1])  ), stringsAsFactors = F)
 # itest
 names(toptopics_TEST) <- c("id", "topic")
 # head(toptopics_TEST)
 toptopics_TEST$id <- as.numeric(toptopics_TEST$id)
 toptopics_TEST$topic <- as.numeric(toptopics_TEST$topic)
-
 
 #Store the values into the DB
 
