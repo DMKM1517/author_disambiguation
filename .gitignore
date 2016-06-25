@@ -1,3 +1,4 @@
 web/config.json
-*.json
+db_login.json
 Training/DistancesFiles
+*.Rhistory
