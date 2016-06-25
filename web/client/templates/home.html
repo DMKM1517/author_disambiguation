@@ -53,7 +53,7 @@
 			<selectize placeholder="Keywords" config="config_selectize" options="options_selectize" ng-model="article.keywords" required="true"></selectize>
 		</div>
 		<div class="form-group">
-			<label for="subject">Subject</label>
+			<label for="subject">Subjects</label>
 			<selectize placeholder="Subjects" config="config_selectize2" options="options_selectize2" ng-model="article.subjects" required="true"></selectize>
 		</div>
 		<div class="form-group">
@@ -100,7 +100,8 @@
 				</table>
 			</div>
 		</div>
-		<button type="submit" class="btn btn-default" ng-click="submit($event)">Submit</button>
+		<button type="submit" class="btn btn-success" ng-click="submit($event)">Submit</button>
+		<button class="btn btn-default" ng-click="reset($event)">Reset</button>
 	</form>
 </div>
 

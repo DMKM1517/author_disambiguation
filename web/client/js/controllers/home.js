@@ -24,7 +24,7 @@ App.controller('HomeController', ['$scope', '$cookies', '$state', '$http', funct
 		closeAfterSelect: true,
 		plugins: ['remove_button']
 	};
-	/*$http.get('/getSubjects').then(function(resp) {
+	$http.get('/getSubjects').then(function(resp) {
 		if (resp.data) {
 			$scope.options_selectize2 = resp.data.map(x => {
 				return {
@@ -35,13 +35,13 @@ App.controller('HomeController', ['$scope', '$cookies', '$state', '$http', funct
 		}
 	}, function(error) {
 		console.error(error);
-	});*/
+	});
 
 	if ($cookies.get('accessToken')) {
 		$scope.logged_in = true;
 		MendeleySDK.API.setAuthFlow(MendeleySDK.Auth.authCodeFlow({
 			apiAuthenticateUrl: '/login',
-			// refreshAccessTokenUrl: '/oauth/refresh'
+			refreshAccessTokenUrl: '/oauth/refresh'
 		}));
 		MendeleySDK.API.profiles.me().done(function(profile) {
 			$scope.name = profile.display_name;
@@ -137,6 +137,7 @@ App.controller('HomeController', ['$scope', '$cookies', '$state', '$http', funct
 	$scope.submit = function(event) {
 		event.preventDefault();
 		let btn = $(event.target);
+		btn.text('Processing...');
 		btn.prop('disabled', true);
 		$http.post('/api/Articles/disambiguate', {
 			article: $scope.article
@@ -147,11 +148,27 @@ App.controller('HomeController', ['$scope', '$cookies', '$state', '$http', funct
 				$scope.results_opened = true;
 				$scope.results = disambiguated;
 			}
+			btn.text('Submit');
 			btn.prop('disabled', false);
 		}, function(err) {
-			console.error(err.data.error.message);
+			console.error(err);
+			let msg = 'An error occured. Try again.';
+			if (err.data && err.data.error && err.data.error.message) {
+				msg = err.data.error.message;
+			}
+			alert(msg);
+			btn.text('Submit');
 			btn.prop('disabled', false);
 		});
+	};
+
+	$scope.reset = function(event) {
+		event.preventDefault();
+		$scope.article = {
+			authors: [],
+			references: []
+		};
+		$('.document').removeClass('active');
 	};
 
 	/*$scope.loadFile = function(event) {
