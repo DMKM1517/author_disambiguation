@@ -189,9 +189,12 @@ if(nrow(df_articlesTEST) > 0){
     print("No articles found without LDA Topic")
 }
 
-#Cleanup
-rm(con, query2, df_articlesTEST)
-
 #close the db connection
 dbDisconnect(con)
 
+#Cleanup
+rm(con, query2, df_articlesTEST)
+
+
+#Bug fix (don't delete)
+print("")
