@@ -2,3 +2,4 @@ web/config.json
 db_login.json
 Training/DistancesFiles
 *.Rhistory
+*.Rhistory

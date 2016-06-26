@@ -210,13 +210,13 @@ if(nrow(last_names) > 0){
             as.numeric(paste(as.vector(asc(as.character(last_names_unique$soundex[i]), simplify=TRUE)), collapse = ""))
     }
     
-    # load the models 
-    prace_model <- readRDS("../models/ethnic_2prace.rds")
-    aian_model <- readRDS("../models/ethnic_aian.rds")
-    api_model <- readRDS("../models/ethnic_api.rds")
-    black_model <- readRDS("../models/ethnic_black.rds")
-    hispanic_model <- readRDS("../models/ethnic_hispanic.rds")
-    white_model <- readRDS("../models/ethnic_white.rds")
+    # load the Models 
+    prace_model <- readRDS("../Models/ethnic_2prace.rds")
+    aian_model <- readRDS("../Models/ethnic_aian.rds")
+    api_model <- readRDS("../Models/ethnic_api.rds")
+    black_model <- readRDS("../Models/ethnic_black.rds")
+    hispanic_model <- readRDS("../Models/ethnic_hispanic.rds")
+    white_model <- readRDS("../Models/ethnic_white.rds")
     
     #Predict the ethnicities
     prace_pred <- predict(prace_model, full_ngram_table)
