@@ -5,16 +5,16 @@
 # install.packages("ngram")
 # install.packages("R.utils")
 
-library(gtools, quietly = TRUE, warn.conflicts = FALSE)
-library(devtools, quietly = TRUE, warn.conflicts = FALSE)
-library(ngram, quietly = TRUE, warn.conflicts = FALSE)
-library(reshape2, quietly = TRUE, warn.conflicts = FALSE)
-library(stringdist, quietly = TRUE, warn.conflicts = FALSE)
-library(e1071, quietly = TRUE, warn.conflicts = FALSE)
-library(caret, quietly = TRUE, warn.conflicts = FALSE)
-library(randomForest, quietly = TRUE, warn.conflicts = FALSE)
-library(R.utils, quietly = TRUE, warn.conflicts = FALSE)
-library(rjson, quietly = TRUE, warn.conflicts = FALSE)
+library(gtools, quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
+library(devtools, quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
+library(ngram, quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
+library(reshape2, quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
+library(stringdist, quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
+library(e1071, quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
+library(caret, quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
+library(randomForest, quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
+library(R.utils, quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
+library(rjson, quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
 
 ######################################################
 #################### FUNCTIONS #######################
@@ -62,7 +62,7 @@ safeUpsert <- function(con, data, destTable, id_columns){
     # id_columns <- 'id'
     
     #load R.utils library (needed otherwise it breaks)
-    library(R.utils)
+    library(R.utils, quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
     
     #sets the temp table
     tempTable <- destTable

@@ -3,15 +3,15 @@
 # install.packages("RTextTools")
 # install.packages("R.utils")
 
-library(stringr, quietly = TRUE, warn.conflicts = FALSE)
-require("RPostgreSQL", quietly = TRUE, warn.conflicts = FALSE)
-library(reshape, quietly = TRUE, warn.conflicts = FALSE)
-library(vegan, quietly = TRUE, warn.conflicts = FALSE)
-library(tm, quietly = TRUE, warn.conflicts = FALSE)
-library(RTextTools, quietly = TRUE, warn.conflicts = FALSE)
-library(topicmodels, quietly = TRUE, warn.conflicts = FALSE)
-library("rjson", quietly = TRUE, warn.conflicts = FALSE)
-library("R.utils", quietly = TRUE, warn.conflicts = FALSE)
+library(stringr, quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
+require("RPostgreSQL", quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
+library(reshape, quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
+library(vegan, quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
+library(tm, quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
+library(RTextTools, quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
+library(topicmodels, quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
+library("rjson", quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
+library("R.utils", quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
 
 ######################################################
 #################### FUNCTIONS #######################
@@ -47,7 +47,7 @@ safeUpsert <- function(con, data, destTable, id_columns){
     # id_columns <- 'id'
     
     #load R.utils library (needed otherwise it breaks)
-    library(R.utils)
+    library(R.utils, quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
     
     #sets the temp table
     tempTable <- destTable

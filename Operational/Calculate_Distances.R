@@ -10,17 +10,17 @@
 # install.packages("R.utils")
 # install.packages("rjson")
 
-library(stringr, quietly = TRUE, warn.conflicts = FALSE)
-require("RPostgreSQL", quietly = TRUE, warn.conflicts = FALSE)
-library(reshape2, quietly = TRUE, warn.conflicts = FALSE)
-library(vegan, quietly = TRUE, warn.conflicts = FALSE)
-library(tm, quietly = TRUE, warn.conflicts = FALSE)
-library(splitstackshape, quietly = TRUE, warn.conflicts = FALSE)
+library(stringr, quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
+require("RPostgreSQL", quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
+library(reshape2, quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
+library(vegan, quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
+library(tm, quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
+library(splitstackshape, quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
 
-library(R.utils, quietly = TRUE, warn.conflicts = FALSE)
-library(foreach, quietly = TRUE, warn.conflicts = FALSE)
-library(doParallel, quietly = TRUE, warn.conflicts = FALSE)
-library("rjson", quietly = TRUE, warn.conflicts = FALSE)
+library(R.utils, quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
+library(foreach, quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
+library(doParallel, quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
+library("rjson", quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
 
 ######################################################
 #################### FUNCTIONS #######################
@@ -97,7 +97,7 @@ safeUpsert <- function(con, data, destTable, id_columns){
     # id_columns <- 'id'
     
     #load R.utils library (needed otherwise it breaks)
-    library(R.utils)
+    library(R.utils, quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
     
     #sets the temp table
     tempTable <- destTable

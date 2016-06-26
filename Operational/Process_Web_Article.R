@@ -6,13 +6,13 @@
 # install.packages("assertive")
 # install.packages("kimisc")
 
-library(RPostgreSQL, quietly = TRUE, warn.conflicts = FALSE)
-library(stringr, quietly = TRUE, warn.conflicts = FALSE)
-library(glmnet, quietly = TRUE, warn.conflicts = FALSE)
-library(reshape2, quietly = TRUE, warn.conflicts = FALSE)
-library(rjson, quietly = TRUE, warn.conflicts = FALSE)
-library(assertive, quietly = TRUE, warn.conflicts = FALSE)
-library(kimisc, quietly = TRUE, warn.conflicts = FALSE)
+library(RPostgreSQL, quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
+library(stringr, quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
+library(glmnet, quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
+library(reshape2, quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
+library(rjson, quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
+library(assertive, quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
+library(kimisc, quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
 
 ######################################################
 #################### FUNCTIONS #######################
@@ -48,7 +48,7 @@ safeUpsert <- function(con, data, destTable, id_columns){
     # id_columns <- 'id'
     
     #load R.utils library (needed otherwise it breaks)
-    library(R.utils)
+    library(R.utils, quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
     
     #sets the temp table
     tempTable <- destTable
