@@ -143,6 +143,10 @@ if(process_id == 'ERROR' | is.na(as.numeric(process_id))){
     stop("Non-valid processid received. Please pass a valid processid as parameter.")
 }else{
     
+    ## Starts the Global Timer
+    #Parallel Loop
+    processStrt <- Sys.time()
+    
     #### 1. Add to main and calculate focus names ####
     print("#### 1. Add to main and calculate focus names ####")
     
@@ -253,5 +257,5 @@ if(process_id == 'ERROR' | is.na(as.numeric(process_id))){
     print("#### 6. Calculate Equal Authors ####")
     source("./Predict_Equal_Authors.R", local = TRUE)
     
-    print("Process completed. Results in main.same_authors")
+    print(paste("Process completed. It took ", (Sys.time()-strt), ". Results in main.same_authors", sep = ""))
 }

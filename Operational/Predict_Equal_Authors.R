@@ -4,11 +4,11 @@
 # install.packages("reshape2")
 # install.packages("rjson")
 
-require("RPostgreSQL")
-library(stringr)
-library(glmnet)
-library(reshape2)
-library("rjson")
+library(RPostgreSQL, quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
+library(stringr, quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
+library(glmnet, quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
+library(reshape2, quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
+library(rjson, quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
 
 
 ######################################################
@@ -45,7 +45,7 @@ safeUpsert <- function(con, data, destTable, id_columns){
     # id_columns <- 'id'
     
     #load R.utils library (needed otherwise it breaks)
-    library(R.utils)
+    library(R.utils, quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
     
     #sets the temp table
     tempTable <- destTable
@@ -244,7 +244,7 @@ if(process_id == 'ERROR' | is.na(as.numeric(process_id))){
     #### 1 LOGISTIC REGRESSION ####
     
     # loads the Logistic Regression model
-    model_cvglm <- readRDS("../models/model_cvglm.rds")
+    model_cvglm <- readRDS("../Models/model_cvglm.rds")
     
     # predict with the model
     prediction_cvglm <- predict.cv.glmnet(model_cvglm, df_dist, type = 'response', s="lambda.min")
