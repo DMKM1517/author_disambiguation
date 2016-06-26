@@ -88,7 +88,7 @@ module.exports = function(app) {
 		app.dataSources.ArticlesDB.connector.execute(query, function(err, results) {
 			res.json(results);
 		});
-	})
+	});
 
 	function setCookies(res, token) {
 		res.cookie(accessTokenCookieName, token.access_token, {

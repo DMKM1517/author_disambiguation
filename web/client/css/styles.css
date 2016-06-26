@@ -33,3 +33,7 @@
 	list-style: none;
 	padding: 0;
 }
+
+#logs {
+	height: 100px;
+}

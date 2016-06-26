@@ -2,6 +2,8 @@
 # install.packages("topicmodels")
 # install.packages("RTextTools")
 # install.packages("R.utils")
+# install.packages("reshape")
+# install.packages("RTextTools")
 
 library(stringr, quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
 library(RPostgreSQL, quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
