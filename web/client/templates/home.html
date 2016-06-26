@@ -100,7 +100,7 @@
 				</table>
 			</div>
 		</div>
-		<button type="submit" class="btn btn-success" ng-click="submit($event)">Submit</button>
+		<button type="submit" id="submit" class="btn btn-success" ng-click="submit($event)">Submit</button>
 		<button class="btn btn-default" ng-click="reset($event)">Reset</button>
 	</form>
 </div>
@@ -142,7 +142,11 @@
 			<uib-accordion-heading>
 				Results <i class="pull-right glyphicon" ng-class="{'glyphicon-chevron-down': results_opened, 'glyphicon-chevron-right': !results_opened}"></i>
 			</uib-accordion-heading>
-			<table class="table table-striped">
+			<div ng-show="processing">
+				<label>Processing... Please wait a couple of minutes</label>
+				<textarea ng-bind="logs" class="form-control" id="logs"></textarea>
+			</div>
+			<table class="table table-striped" ng-show="!processing">
 				<thead>
 					<tr>
 						<th>Author</th>
@@ -151,14 +155,15 @@
 				</thead>
 				<tbody>
 					<tr ng-repeat="result in results">
-						<td>{{result.author}}</td>
-						<td>
+						<td>{{result.d1}}</td>
+						<td>{{result.title}}</td>
+						<!--<td>
 							<ul class="results">
 								<li ng-repeat="article in result.articles">
 									{{article}}
 								</li>
 							</ul>
-						</td>
+						</td>-->
 					</tr>
 				</tbody>
 			</table>

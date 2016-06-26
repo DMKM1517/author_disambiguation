@@ -4,6 +4,7 @@
 #install.packages("sqldf")
 # install.packages("ngram")
 # install.packages("R.utils")
+# install.packages("devtools")
 
 library(gtools, quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
 library(devtools, quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)

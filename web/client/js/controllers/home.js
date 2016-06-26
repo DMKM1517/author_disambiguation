@@ -1,9 +1,12 @@
 'use strict';
 
 App.controller('HomeController', ['$scope', '$cookies', '$state', '$http', function($scope, $cookies, $state, $http) {
+	var socket = io();
 	$scope.logged_in = false;
 	$scope.mendeley_opened = true;
 	$scope.results_opened = false;
+	$scope.processing = false;
+	$scope.logs = '';
 	$scope.article = {
 		authors: [],
 		references: []
@@ -136,30 +139,48 @@ App.controller('HomeController', ['$scope', '$cookies', '$state', '$http', funct
 
 	$scope.submit = function(event) {
 		event.preventDefault();
+		$scope.processing = true;
+		$scope.logs = '';
 		let btn = $(event.target);
 		btn.text('Processing...');
 		btn.prop('disabled', true);
 		$http.post('/api/Articles/disambiguate', {
 			article: $scope.article
 		}).then(function(resp) {
-			if (resp.data && resp.data.authors) {
-				let disambiguated = resp.data.authors;
-				console.log(disambiguated);
-				$scope.results_opened = true;
-				$scope.results = disambiguated;
-			}
-			btn.text('Submit');
-			btn.prop('disabled', false);
-		}, function(err) {
-			console.error(err);
-			let msg = 'An error occured. Try again.';
-			if (err.data && err.data.error && err.data.error.message) {
-				msg = err.data.error.message;
-			}
-			alert(msg);
-			btn.text('Submit');
-			btn.prop('disabled', false);
-		});
+				/*if (resp.data && resp.data.authors) {
+					let disambiguated = resp.data.authors;
+					console.log(disambiguated);
+					$scope.results_opened = true;
+					$scope.results = disambiguated;
+				}
+				btn.text('Submit');
+				btn.prop('disabled', false);*/
+				if (resp.data && resp.data.process_id) {
+					let process_id = resp.data.process_id;
+					console.log(process_id);
+					$scope.results_opened = true;
+					socket.emit('process', process_id);
+					/*var event_source = new EventSource('/process?id=' + process_id);
+					event_source.onmessage = function(ev) {
+						console.log(ev.data);
+					};*/
+
+				} else {
+					console.log('error');
+					btn.text('Submit');
+					btn.prop('disabled', false);
+				}
+			},
+			function(err) {
+				console.error(err);
+				let msg = 'An error occurred. Try again.';
+				if (err.data && err.data.error && err.data.error.message) {
+					msg = err.data.error.message;
+				}
+				alert(msg);
+				btn.text('Submit');
+				btn.prop('disabled', false);
+			});
 	};
 
 	$scope.reset = function(event) {
@@ -170,6 +191,31 @@ App.controller('HomeController', ['$scope', '$cookies', '$state', '$http', funct
 		};
 		$('.document').removeClass('active');
 	};
+
+	socket.on('output', function(msg) {
+		console.log(msg);
+		$scope.logs += msg;
+		$scope.$apply();
+		$('#logs').scrollTop($('#logs')[0].scrollHeight - $('#logs').height());
+	});
+	socket.on('results', function(results) {
+		console.log(results);
+		$scope.processing = false;
+		let disambiguated = JSON.parse(results);
+		$scope.results = disambiguated;
+		$scope.$apply();
+		$('#submit').text('Submit');
+		$('#submit').prop('disabled', false);
+	});
+	socket.on('err', function() {
+		$scope.processing = false;
+		$scope.results = {};
+		$scope.results_opened = false;
+		$scope.$apply();
+		alert('An error occurred. Try again.');
+		$('#submit').text('Submit');
+		$('#submit').prop('disabled', false);
+	});
 
 	/*$scope.loadFile = function(event) {
 		var input = event.target;
