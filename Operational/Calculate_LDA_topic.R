@@ -161,7 +161,7 @@ if(nrow(df_articlesTEST) > 0){
     
     # read LDA model
     
-    lda <- readRDS("../models/LDA_model.rds")
+    lda <- readRDS("../Models/LDA_model.rds")
     
     # create the DocumentTermMatrix
     matrix2 <- create_matrix(as.vector(df_articlesTEST), language="english", removeNumbers=TRUE, stemWords=TRUE, weighting=weightTf)
