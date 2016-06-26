@@ -148,7 +148,6 @@ from
 	
 -- Create the indexes
 CREATE UNIQUE INDEX ON main.articles_authors (id, d);
-CREATE INDEX ON main.articles_authors (author);
 CREATE INDEX ON main.articles_authors (last_name);
 CREATE INDEX ON main.articles_authors (focus_name);
 CREATE INDEX ON main.articles_authors (id, focus_name);
@@ -175,6 +174,69 @@ CREATE INDEX ON main.authors_disambiguated (author_id);
 CREATE UNIQUE INDEX ON main.authors_disambiguated (id, d);
 
 
+-- Creates the table that contains the autors that are the same
+drop table if exists main.same_authors;
+create table main.same_authors(
+	id1 int NOT NULL,
+	d1 int NOT NULL,
+	id2 int NOT NULL,
+	d2 int NOT NULL,
+	focus_name varchar(15),
+	same boolean,
+	PRIMARY KEY (id1, d1, id2, d2, focus_name)
+);
+CREATE INDEX ON main.same_authors (id1, d1);
+CREATE INDEX ON main.same_authors (id2, d2);
+CREATE INDEX ON main.same_authors (id1);
+CREATE INDEX ON main.same_authors (id2);
+CREATE INDEX ON main.same_authors (focus_name);
+
+
+
+
+-- Creates the table that contains all the information for calculating the distances 
+drop table if exists main.info_for_distances;
+select
+	a.processid,
+	aa.id,
+	aa.d,
+	aa.focus_name,
+	a.title,
+	k.keywords,
+	refs.references,
+	sub.subjects,
+	aa2.coauthors,
+	aa.last_name,
+	et.eth_aian_api_bck_hsp_twr_wht
+into main.info_for_distances
+from
+	main.articles_authors aa
+	join (
+		select id, string_agg(focus_name, ':::') as coauthors
+		from main.articles_authors 
+		group by id) aa2 on aa.id = aa2.id
+	join source.articles a on a.id = aa.id
+	left join (
+		select id, string_agg(keyword, ':::') as keywords
+		from source.keywords
+		group by id) k on aa.id = k.id
+	left join (
+		select id, string_agg(journal, ':::') as references
+		from source.references
+		group by id) refs on aa.id = refs.id
+	left join (
+		select id, string_agg(subject, ':::') as subjects
+		from source.subjects 
+		group by id) sub on aa.id = sub.id
+	left join (
+		select last_name, api|| '_' || aian || '_' || black|| '_' || hispanic|| '_' || tworace|| '_' || white as eth_aian_api_bck_hsp_twr_wht
+		from main.last_name_ethnicities) et on aa.last_name = et.last_name;
+
+CREATE UNIQUE INDEX ON main.info_for_distances (id, d);
+CREATE INDEX ON main.info_for_distances (last_name);
+CREATE INDEX ON main.info_for_distances (focus_name);
+CREATE INDEX ON main.info_for_distances (id);
+
 -- Creates the table for the Last Name Ethnicities
 drop table if exists main.last_name_ethnicities;
 create table main.last_name_ethnicities(
@@ -188,96 +250,6 @@ create table main.last_name_ethnicities(
 	PRIMARY KEY (last_name)
 );
 
-select * 
-from training.articles_authors
-limit 500;
-select count(*) 
-from main.last_name_ethnicities
-limit 500;
-truncate table main.last_name_ethnicities;
-select * 
-from main.last_name_ethnicities_1464971317934
-limit 500;
-
-drop table  distances.title_1464980820519;
-
-
-select distinct et.* , det.focus_name, metaphone(et.last_name, 3) as focus_name_soft
-from main.last_name_ethnicities et
-join distances.ethnicity det on et.last_name = det.last_name_1
-order by 1
-limit 500;
-
-select count(*)
-from distances.coauthor
-limit 500;
-select count(*)
-from distances.ethnicity
-limit 500;
-select *
-from distances.ethnicity
-limit 500;
-select count(*)
-from distances.coauthor
-limit 500;
- 		
-        UPDATE main.last_name_ethnicities AS dest 
-        SET 
-            last_name=temp.last_name, aian=temp.aian, api=temp.api, black=temp.black, hispanic=temp.hispanic, tworace=temp.tworace, white=temp.white
-        FROM main.last_name_ethnicities_1464971317934 AS temp
-        WHERE temp.last_name = dest.last_name;
-        
-        INSERT INTO main.last_name_ethnicities
-            (last_name, aian, api, black, hispanic, tworace, white)
-        SELECT 
-            temp.last_name, temp.aian, temp.api, temp.black, temp.hispanic, temp.tworace, temp.white
-        FROM
-            main.last_name_ethnicities dest
-            right join main.last_name_ethnicities_1464971317934 temp on dest.last_name = temp.last_name
-        where
-            dest.last_name is null;
-
-   
-            
-             CREATE INDEX ON distances.title_1464981253819 (id1, id1, focus_name);
-    
-    UPDATE distances.title AS dest 
-    SET 
-        id1=temp.id1, id2=temp.id2, dist_title=temp.dist_title, focus_name=temp.focus_name
-    FROM distances.title_1464981253819 AS temp
-    WHERE dest.id1=temp.id1 AND dest.id1=temp.id1 AND dest.focus_name=temp.focus_name;
-    
-    INSERT INTO distances.title
-        (id1, id2, dist_title, focus_name)
-    SELECT 
-        temp.id1, temp.id2, temp.dist_title, temp.focus_name
-    FROM
-        distances.title dest
-        right join distances.title_1464981253819 temp on dest.id1=temp.id1 AND dest.id1=temp.id1 AND dest.focus_name=temp.focus_name
-    where
-        dest.id1 is null AND dest.id1 is null AND dest.focus_name is null;
-        
-        SELECT 
-        *
-    FROM
-        distances.title dest
-        right join distances.title_1464981253819 temp on dest.id1=temp.id1 AND dest.id1=temp.id1 AND dest.focus_name=temp.focus_name
-        WHERE dest.id1=temp.id1 AND dest.id1=temp.id1 AND dest.focus_name=temp.focus_name;
- 
-select 'drop table ' || table_schema || '.' || table_name || ';'
-from information_schema.tables
-where "table_name" like 'title_%'
-limit 500;
-drop table distances.title_1464981150046;
-drop table distances.title_1464981150331;
-drop table distances.title_1464981150294;
-drop table distances.title_1464981150966;
-drop table distances.title_1464981150361;
-drop table distances.title_1464981151122;
-drop table distances.title_1464981150550;
-drop table distances.title_1464981253819;
-drop table distances.title_1464981150673;
-
 ---------------------------------------------------------------------------
 ------------------------- DISTANCES TABLES -------------------------
 
@@ -290,7 +262,7 @@ CREATE TABLE distances.keywords (
   id1 int NOT NULL,
   id2 int NOT NULL,
   dist_keywords float DEFAULT NULL,
-  focus_name varchar(100) DEFAULT NULL,
+  focus_name varchar(15) DEFAULT NULL,
   PRIMARY KEY (id1, id2, focus_name)
 );
 create index on distances.keywords (id1);
@@ -303,7 +275,7 @@ CREATE TABLE distances.title (
   id1 int NOT NULL,
   id2 int NOT NULL,
   dist_title float DEFAULT NULL,
-  focus_name varchar(100) DEFAULT NULL,
+  focus_name varchar(15) DEFAULT NULL,
   PRIMARY KEY (id1, id2, focus_name)
 );
 create index on distances.title (id1);
@@ -316,7 +288,7 @@ CREATE TABLE distances.refs (
   id1 int NOT NULL,
   id2 int NOT NULL,
   dist_refs float DEFAULT NULL,
-  focus_name varchar(100) DEFAULT NULL,
+  focus_name varchar(15) DEFAULT NULL,
   PRIMARY KEY (id1, id2, focus_name)
 );
 create index on distances.refs (id1);
@@ -329,7 +301,7 @@ CREATE TABLE distances.subject (
   id1 int NOT NULL,
   id2 int NOT NULL,
   dist_subject float DEFAULT NULL,
-  focus_name varchar(100) DEFAULT NULL,
+  focus_name varchar(15) DEFAULT NULL,
   PRIMARY KEY (id1, id2, focus_name)
 );
 create index on distances.subject (id1);
@@ -342,7 +314,7 @@ CREATE TABLE distances.coauthor (
   id1 int NOT NULL,
   id2 int NOT NULL,
   dist_coauthor float DEFAULT NULL,
-  focus_name varchar(100) DEFAULT NULL,
+  focus_name varchar(15) DEFAULT NULL,
   PRIMARY KEY (id1, id2, focus_name)
 );
 create index on distances.coauthor (id1);
@@ -355,7 +327,7 @@ CREATE TABLE distances.ethnicity (
   last_name_1 varchar(250) NOT NULL,
   last_name_2 varchar(250) NOT NULL,
   dist_ethnicity float DEFAULT NULL,
-  focus_name varchar(100) DEFAULT NULL,
+  focus_name varchar(15) DEFAULT NULL,
   PRIMARY KEY (last_name_1, last_name_2, focus_name)
 );
 create index on distances.ethnicity (last_name_1);
@@ -372,15 +344,14 @@ CREATE TABLE main.fda_topic (
 );
 create index on main.fda_topic (topic);
 
-select * 
-from distances.ethnicity
-limit 500;
-
 
 ---------------------------------------------------------------------------
 ------------------------- AGGREGATION VIEWS -------------------------
--- View that joins all the distances
+
+drop view if exists main.v_authors_distance;
 drop view if exists main.v_articles_distance;
+
+-- View that joins all the distances
 CREATE VIEW main.v_articles_distance AS
 select
 	tl.id1,
@@ -393,14 +364,12 @@ select
 	ca.dist_coauthor
 from 
 	distances.title tl
-	LEFT JOIN distances.refs rf ON tl.id1 = rf.id1 AND tl.id2 = rf.id2 AND tl.focus_name = rf.focus_name
-	LEFT JOIN distances.subject sb ON tl.id1 = sb.id1 AND tl.id2 = sb.id2 AND tl.focus_name = sb.focus_name
-	LEFT JOIN distances.keywords kw ON tl.id1 = kw.id1 AND tl.id2 = kw.id2 AND tl.focus_name = kw.focus_name
-	LEFT JOIN distances.coauthor ca ON tl.id1 = ca.id1 AND tl.id2 = ca.id2 AND tl.focus_name = ca.focus_name;
-	
+	FULL OUTER JOIN distances.refs rf ON tl.id1 = rf.id1 AND tl.id2 = rf.id2 AND tl.focus_name = rf.focus_name
+	FULL OUTER JOIN distances.subject sb ON tl.id1 = sb.id1 AND tl.id2 = sb.id2 AND tl.focus_name = sb.focus_name
+	FULL OUTER JOIN distances.keywords kw ON tl.id1 = kw.id1 AND tl.id2 = kw.id2 AND tl.focus_name = kw.focus_name
+	FULL OUTER JOIN distances.coauthor ca ON tl.id1 = ca.id1 AND tl.id2 = ca.id2 AND tl.focus_name = ca.focus_name;
 	
 -- View that joins the authors with the distances of their articles
-drop view if exists main.v_authors_distance;
 CREATE VIEW main.v_authors_distance AS
 select
 	vad.id1,

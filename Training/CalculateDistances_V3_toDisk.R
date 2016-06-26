@@ -584,8 +584,8 @@ queryFN <- "
   from :DISAMBIGUATED:.articles_authors
   group by focus_name
   order by count(focus_name) desc
-  LIMIT 2
-  OFFSET 8;"
+  LIMIT 7
+  OFFSET 1;"
 
 # Replace the focus name and the environment if neccesary
 if(testing){
@@ -602,7 +602,7 @@ head(focusNames, n = 20)
 # truncateDistanceTables(con)
 
 #setup parallel backend to use 8 processors
-cl<-makeCluster(3)
+cl<-makeCluster(2)
 registerDoParallel(cl)
 
 #Parallel Loop
