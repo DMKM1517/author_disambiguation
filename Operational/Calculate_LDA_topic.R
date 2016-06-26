@@ -4,14 +4,14 @@
 # install.packages("R.utils")
 
 library(stringr, quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
-require("RPostgreSQL", quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
+library(RPostgreSQL, quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
 library(reshape, quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
 library(vegan, quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
 library(tm, quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
 library(RTextTools, quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
 library(topicmodels, quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
-library("rjson", quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
-library("R.utils", quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
+library(rjson, quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
+library(R.utils, quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
 
 ######################################################
 #################### FUNCTIONS #######################
@@ -128,18 +128,18 @@ safeUpsert <- function(con, data, destTable, id_columns){
 con <- getDBConnection()
 
 query2 <- "
-SELECT 
-    a.id, 
-    concat_ws(', ', lower(k.keywords)::text, lower(a.title::text)) as tt
-FROM
-    source.articles a
-    left JOIN (SELECT id, string_agg(keyword, ', ') as keywords
-        FROM source.keywords
-        GROUP BY id) k ON k.id = a.id
-    LEFT JOIN main.fda_topic f ON a.id = f.id
-WHERE 
-    f.topic IS NULL
-LIMIT 2000;"
+    SELECT 
+        a.id, 
+        concat_ws(', ', lower(k.keywords)::text, lower(a.title::text)) as tt
+    FROM
+        source.articles a
+        left JOIN (SELECT id, string_agg(keyword, ', ') as keywords
+            FROM source.keywords
+            GROUP BY id) k ON k.id = a.id
+        LEFT JOIN main.fda_topic f ON a.id = f.id
+    WHERE 
+        f.topic IS NULL
+    LIMIT 2000;"
 
 df_articlesTEST <- dbGetQuery(con, query2)
 
@@ -189,8 +189,9 @@ if(nrow(df_articlesTEST) > 0){
     print("No articles found without LDA Topic")
 }
 
+#Cleanup
+rm(con, query2, df_articlesTEST)
+
 #close the db connection
 dbDisconnect(con)
 
-#Cleanup
-rm(con, query2, df_articlesTEST)

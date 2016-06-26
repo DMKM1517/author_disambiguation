@@ -11,7 +11,7 @@
 # install.packages("rjson")
 
 library(stringr, quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
-require("RPostgreSQL", quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
+library(RPostgreSQL, quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
 library(reshape2, quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
 library(vegan, quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
 library(tm, quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
@@ -20,7 +20,7 @@ library(splitstackshape, quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE
 library(R.utils, quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
 library(foreach, quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
 library(doParallel, quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
-library("rjson", quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
+library(rjson, quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
 
 ######################################################
 #################### FUNCTIONS #######################
