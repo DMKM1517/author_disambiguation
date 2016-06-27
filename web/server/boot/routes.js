@@ -22,6 +22,12 @@ module.exports = function(app) {
 		res.redirect(oauthPath);
 	});
 
+	app.get('/logout', function(req, res) {
+		res.clearCookie(accessTokenCookieName);
+		res.clearCookie(refreshTokenCookieName);
+		res.redirect('/');
+	});
+
 	app.get(oauthPath, function(req, res) {
 		let authorizationUri = oauth2.authCode.authorizeURL({
 			redirect_uri: redirectUri,

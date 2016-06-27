@@ -39,11 +39,11 @@
 		</div>
 		<div class="form-group">
 			<label for="keywords">Keywords</label>
-			<selectize placeholder="Keywords" config="config_selectize" options="options_selectize" ng-model="article.keywords" required="true"></selectize>
+			<selectize placeholder="Keywords" config="config_keywords" options="options_keywords" ng-model="article.keywords" required="true"></selectize>
 		</div>
 		<div class="form-group">
 			<label for="subject">Subjects</label>
-			<selectize placeholder="Subjects" config="config_selectize2" options="options_selectize2" ng-model="article.subjects" required="true"></selectize>
+			<selectize placeholder="Subjects" config="config_subjects" options="options_subjects" ng-model="article.subjects" required="true"></selectize>
 		</div>
 		<div class="form-group">
 			<label for="journal">Journal</label>
@@ -99,7 +99,7 @@
 			</uib-accordion-heading>
 			<a href="/login" ng-if="!logged_in"><img src="img/mendeley.png" width="25"> Login with Mendeley</a>
 			<div ng-if="logged_in">
-				<h2 ng-bind="name"></h2>
+				<h2>{{name}} <a href="/logout" class="pull-right" title="Log out"><i class="glyphicon glyphicon-log-out"></i></a></h2>
 				<!--<form>
 			<div class="form-group">
 				<label for="file">File</label>
