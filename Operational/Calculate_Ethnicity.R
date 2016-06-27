@@ -45,8 +45,11 @@ getDBConnection <- function(){
 
 # Function that cleans a Last Name
 cleanLastName <- function(last_name) {
+    #fix enconding
+    Encoding(last_name) <- "UTF-8"
+    t <- iconv(last_name, to="ASCII//TRANSLIT") 
     # To lower Case
-    t <- toupper(last_name)
+    t <- toupper(t)
     #Removes Punctuation
     t <- gsub("[[:punct:]]", "", t) 
     #Removes Extra Whitespaces
@@ -160,8 +163,13 @@ last_names <- dbGetQuery(con, query_last_names)
 if(nrow(last_names) > 0){
     print(paste("Processing ethnicities for", nrow(last_names), "last names"))
     
+    #Fix the enconding of the last names
+    Encoding(last_names$last_name) <- "UTF-8"
+    
     #cleans the last_names 
     last_names$last_name_clean <- sapply(last_names, cleanLastName)
+    
+    print(last_names)
     
     #unique last names after cleaning
     last_names_unique <- data.frame(last_name_clean = unique(last_names$last_name_clean))
@@ -179,7 +187,7 @@ if(nrow(last_names) > 0){
     full_ngram <- paste(full_ngram[,1], full_ngram[,2])
     
     full_ngram_table <- data.frame(R = 1, bigram = full_ngram)
-    full_ngram_table <- acast(full_ngram_table, formula = R ~ bigram, fun.aggregate = length)
+    full_ngram_table <- acast(full_ngram_table, formula = R ~ bigram, value.var = "bigram", fun.aggregate = length)
     full_ngram_table <- full_ngram_table[0,]
     
     # puts the bigrams in the table
@@ -240,6 +248,8 @@ if(nrow(last_names) > 0){
     final_last_names <- merge(x = last_names, y = preds, by = "last_name_clean", all.x = TRUE)
     final_last_names <- final_last_names[,-1]
     
+    print(final_last_names)
+    
     #Perform the upsert of the records into the DB
     safeUpsert(con, data = final_last_names, destTable = c('main', 'last_name_ethnicities'), id_columns = 'last_name')
     
@@ -247,13 +257,12 @@ if(nrow(last_names) > 0){
     rm(last_names_unique, full_ngram, full_ngram_table, ngtable_colnames, prace_model, aian_pred,
        api_pred, black_pred, hispanic_pred, white_pred, preds, final_last_names)
 }else{
-    print("No last names without ethnicities found")
+    print("No last names without ethnicities found.")
 }
 
 #Close the connection
 dbDisconnect(con)
 
 #Cleanup
-rm(con, query2, df_articlesTEST)
-
+rm(con, query_last_names, last_names)
 
