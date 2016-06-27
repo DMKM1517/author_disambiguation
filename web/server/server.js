@@ -27,33 +27,29 @@ boot(app, __dirname, function(err) {
   // start the server if `$ node server.js`
   if (require.main === module) {
     // app.start();
+    var R;
     app.io = require('socket.io')(app.start());
     app.io.on('connection', function(socket) {
       console.log('connection ' + socket.id);
       socket.on('process', function(process_id) {
-        console.log(process_id);
-        let script = __dirname + '/../../Operational/Process_Web_Article.R ';
-        var R = child.spawn('Rscript', [script, process_id]);
+        let script = __dirname + '/../../Operational/Process_Web_Article.R';
+        R = child.spawn('Rscript', [script, process_id]);
         R.stdout.on('data', data => {
-          socket.emit('output', data.toString());
+          let output = data.toString();
+          if (output.substr(0, 3) == '[1]') {
+            socket.emit('output', output);
+          }
         });
         R.stderr.on('data', data => {
-          socket.emit('output', data.toString());
+          socket.emit('output_err', data.toString());
         });
         R.on('close', code => {
-          console.log(code);
           if (code == 0) {
-            /*let results = [{
-              author: 'Name',
-              articles: ['1', '2']
-            }, {
-              author: 'Name2',
-              articles: ['3', '2']
-            }];*/
             let query = `
               select
 	aa1.d as d1,
-	a2.title
+	a2.title,
+  aa2.author
 from
 	source.articles a
 	join main.same_authors sa on a.id = sa.id1
@@ -61,18 +57,26 @@ from
 	left join main.articles_authors aa2 on sa.id2 = aa2.id and sa.d2 = aa2.d
 	left join source.articles a2 on sa.id2 = a2.id
 where
-	a.processid = 10014
+	a.processid = ${process_id}
 	and sa.same is true
 order by aa1.id, aa1.d, aa2.id, aa2.d
 limit 500;
             	`;
             app.dataSources.ArticlesDB.connector.execute(query, function(err, results) {
-              socket.emit('results', JSON.stringify(results));
+              let disambiguated = [];
+              for (let i = 0; i < new Set(results.map(x => x.d1)).size; i++) {
+                disambiguated.push(results.filter(x => x.d1 == i));
+              }
+              socket.emit('results', JSON.stringify(disambiguated));
             });
           } else {
             socket.emit('err');
           }
         });
+      });
+      socket.on('cancel_process', function() {
+        // console.log('cancel_process');
+        require('tree-kill')(R.pid);
       });
     });
   }

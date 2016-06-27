@@ -1,7 +1,8 @@
 .cont-table {
-	max-height: 60vh;
+	max-height: 75vh;
 	overflow: auto;
 }
+
 .cont-authors {
 	max-height: 27vh;
 	overflow: auto;
@@ -16,22 +17,24 @@
 	cursor: pointer;
 }
 
-.inline .col-xs-2{
-    padding: 0 5px;
+.inline .col-xs-2 {
+	padding: 0 5px;
 }
-.inline .col-xs-3{
-    padding: 0 5px;
+
+.inline .col-xs-3 {
+	padding: 0 5px;
 }
-.inline .col-xs-4{
-    padding: 0 5px;
+
+.inline .col-xs-4 {
+	padding: 0 5px;
 }
-.inline .col-xs-5{
-    padding: 0 5px;
+
+.inline .col-xs-5 {
+	padding: 0 5px;
 }
 
 .results {
-	list-style: none;
-	padding: 0;
+	padding: 0 0 0 11px;
 }
 
 #logs {

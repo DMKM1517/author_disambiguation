@@ -1,0 +1,7 @@
+site_name: Author Disambiguation
+repo_url: https://github.com/DMKM1517/author_disambiguation
+site_author: DMKM1517
+pages:
+- Home: index.md
+
+theme: readthedocs

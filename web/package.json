@@ -18,7 +18,8 @@
     "loopback-datasource-juggler": "^2.39.0",
     "serve-favicon": "^2.0.1",
     "simple-oauth2": "^0.7.0",
-    "socket.io": "^1.4.8"
+    "socket.io": "^1.4.8",
+    "tree-kill": "^1.1.0"
   },
   "devDependencies": {
     "eslint": "^2.5.3",

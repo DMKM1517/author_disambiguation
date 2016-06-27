@@ -143,30 +143,34 @@
 				Results <i class="pull-right glyphicon" ng-class="{'glyphicon-chevron-down': results_opened, 'glyphicon-chevron-right': !results_opened}"></i>
 			</uib-accordion-heading>
 			<div ng-show="processing">
-				<label>Processing... Please wait a couple of minutes</label>
-				<textarea ng-bind="logs" class="form-control" id="logs"></textarea>
+				<label>Processing... Please wait a couple of minutes.</label>
+				<button class="btn btn-danger pull-right" ng-click="cancel()">Cancel</button>
+				<br>
+				<br>
+				<uib-progressbar class="progress-striped active" value="progress" type="info"></uib-progressbar>
 			</div>
-			<table class="table table-striped" ng-show="!processing">
-				<thead>
-					<tr>
-						<th>Author</th>
-						<th>Articles</th>
-					</tr>
-				</thead>
-				<tbody>
-					<tr ng-repeat="result in results">
-						<td>{{result.d1}}</td>
-						<td>{{result.title}}</td>
-						<!--<td>
+			<div class="cont-table" ng-show="!processing">
+				<table class="table table-striped">
+					<thead>
+						<tr>
+							<th>Author</th>
+							<th>Articles</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr ng-repeat="(key, author) in processing_authors">
+							<td>{{author.last_name}} {{author.first_name}} {{author.middle_name}}</td>
+							<td>
 							<ul class="results">
-								<li ng-repeat="article in result.articles">
-									{{article}}
+								<li ng-repeat="result in results[key]">
+									{{result.title}} ({{result.author}})
 								</li>
 							</ul>
-						</td>-->
-					</tr>
-				</tbody>
-			</table>
+						</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
 		</uib-accordion-group>
 	</uib-accordion>
 </div>
