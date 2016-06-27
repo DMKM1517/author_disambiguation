@@ -1,5 +1,10 @@
-.cont-table {
-	max-height: 75vh;
+.cont-table-mendeley {
+	max-height: 54vh;
+	overflow: auto;
+}
+
+.cont-table-results {
+	max-height: 66vh;
 	overflow: auto;
 }
 
@@ -7,6 +12,11 @@
 	max-height: 27vh;
 	overflow: auto;
 	clear: both;
+}
+
+.cont-form {
+	max-height: 85vh;
+	overflow: auto;
 }
 
 .document {
@@ -33,8 +43,12 @@
 	padding: 0 5px;
 }
 
-.results {
-	padding: 0 0 0 11px;
+.results tbody, .results thead {
+	display: block;
+}
+.results tbody {
+	overflow: auto;
+	height: 200px;
 }
 
 #logs {

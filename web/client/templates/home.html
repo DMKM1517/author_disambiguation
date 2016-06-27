@@ -1,5 +1,5 @@
 <div class="col-sm-6">
-	<form>
+	<form class="cont-form">
 		<div class="form-group">
 			<label for="title">Title</label>
 			<input type="text" class="form-control" id="title" placeholder="Title" ng-model="article.title" required>
@@ -18,7 +18,7 @@
 				</div>
 				<div class="col-xs-2">
 					<button class="btn btn-default" ng-click="addAuthor($event)">
-					<i class="glyphicon glyphicon-plus"></i>
+						<i class="glyphicon glyphicon-plus"></i>
 					</button>
 				</div>
 			</div>
@@ -68,7 +68,7 @@
 				</div>
 				<div class="col-xs-2">
 					<button class="btn btn-default" ng-click="addReference($event)">
-					<i class="glyphicon glyphicon-plus"></i>
+						<i class="glyphicon glyphicon-plus"></i>
 					</button>
 				</div>
 			</div>
@@ -108,7 +108,7 @@
 			</div>
 		</form>-->
 				<label>Select an article</label>
-				<div class="cont-table">
+				<div class="cont-table-mendeley">
 					<table class="table table-hover">
 						<thead>
 							<tr>
@@ -136,24 +136,32 @@
 				<br>
 				<uib-progressbar class="progress-striped active" value="progress" type="info"></uib-progressbar>
 			</div>
-			<div class="cont-table" ng-show="!processing">
-				<table class="table table-striped">
+			<div class="cont-table-results" ng-show="!processing">
+				<table class="table table-striped results" ng-repeat="(key, author) in processing_authors">
 					<thead>
 						<tr>
-							<th>Author</th>
-							<th>Articles</th>
+							<th>{{author.last_name}} {{author.first_name}} {{author.middle_name}}</th>
 						</tr>
 					</thead>
 					<tbody>
-						<tr ng-repeat="(key, author) in processing_authors">
-							<td>{{author.last_name}} {{author.first_name}} {{author.middle_name}}</td>
+						<tr>
+							<th>Article</th>
+							<th>DOI</th>
+							<th>Related Author</th>
+							<th>Feedback</th>
+						</tr>
+						<tr ng-repeat="result in results[key]">
+							<td>{{result.title}}</td>
+							<td>{{result.doi}}</td>
+							<td>{{result.author}}</td>
 							<td>
-							<ul class="results">
-								<li ng-repeat="result in results[key]">
-									{{result.title}} <span ng-if="result.doi">(DOI: {{result.doi}}) </span>[{{result.author}}]
+								<div class="btn-group" role="group" aria-label="correct_incorrect">
+									<button type="button" ng-click="feedback($event, 1)" class="btn btn-default"><span class="glyphicon glyphicon-thumbs-up"></span></button>
+									<button type="button" ng-click="feedback($event, -1)" class="btn btn-default"><span class="glyphicon glyphicon-thumbs-down"></span></button>
+								</div>
 								</li>
-							</ul>
-						</td>
+								</ul>
+							</td>
 						</tr>
 					</tbody>
 				</table>

@@ -95,6 +95,7 @@ module.exports = function(app) {
               select
 	aa1.d as d1,
 	a2.title,
+  a2.doi,
   aa2.author
 from
 	source.articles a
