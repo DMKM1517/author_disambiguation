@@ -32,15 +32,18 @@ boot(app, __dirname, function(err) {
     app.io.on('connection', function(socket) {
       console.log('connection ' + socket.id);
       socket.on('process', function(process_id) {
+        console.log('process ' + process_id);
         let script = __dirname + '/../../Operational/Process_Web_Article.R';
         R = child.spawn('Rscript', [script, process_id]);
         R.stdout.on('data', data => {
+          // console.log(data.toString());
           let output = data.toString();
           if (output.substr(0, 3) == '[1]') {
             socket.emit('output', output);
           }
         });
         R.stderr.on('data', data => {
+          // console.log(data.toString());
           socket.emit('output_err', data.toString());
         });
         R.on('close', code => {
