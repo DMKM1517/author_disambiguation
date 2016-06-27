@@ -3,5 +3,10 @@ repo_url: https://github.com/DMKM1517/author_disambiguation
 site_author: DMKM1517
 pages:
 - Home: index.md
+- 'Database Installation & Description': db.md
+- 'Training/Testing Script Descriptions': tt_scripts.md
+- 'Database Installation & Description': db.md
+- 'Web Application Installation': ui.md
+- 'Operational Script Descriptions': op_scripts.md
 
 theme: readthedocs
