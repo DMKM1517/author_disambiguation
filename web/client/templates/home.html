@@ -1,6 +1,3 @@
-<h1>DISAMBIGUATE AUTHORS <a href="#/about"><i class="glyphicon glyphicon-question-sign"></i></a></h1>
-<br>
-
 <div class="col-sm-6">
 	<form>
 		<div class="form-group">
@@ -27,14 +24,6 @@
 			</div>
 			<div class="cont-authors">
 				<table class="table table-hover">
-					<!--<thead>
-						<tr>
-							<th>Last name</th>
-							<th>First name</th>
-							<th>Middle name</th>
-							<th>&nbsp;</th>
-						</tr>
-					</thead>-->
 					<tbody>
 						<tr ng-repeat="(key, author) in article.authors">
 							<td>{{author.last_name}}</td>
@@ -61,6 +50,10 @@
 			<input type="text" class="form-control" id="journal" ng-model="article.journal" placeholder="Journal" />
 		</div>
 		<div class="form-group">
+			<label for="doi">DOI</label>
+			<input type="text" id="doi" class="form-control" ng-model="article.doi" placeholder="DOI" />
+		</div>
+		<div class="form-group">
 			<label for="year">Year</label>
 			<input type="number" min="1900" max="2100" id="year" class="form-control" ng-model="article.year" placeholder="2016" />
 		</div>
@@ -81,13 +74,6 @@
 			</div>
 			<div class="cont-authors">
 				<table class="table table-hover">
-					<!--<thead>
-						<tr>
-							<th>Title</th>
-							<th>Journal</th>
-							<th>&nbsp;</th>
-						</tr>
-					</thead>-->
 					<tbody>
 						<tr ng-repeat="(key, reference) in article.references">
 							<td>{{reference.title}}</td>
@@ -111,7 +97,7 @@
 			<uib-accordion-heading>
 				Mendeley <i class="pull-right glyphicon" ng-class="{'glyphicon-chevron-down': mendeley_opened, 'glyphicon-chevron-right': !mendeley_opened}"></i>
 			</uib-accordion-heading>
-			<a href="/login" ng-if="!logged_in">Login with Mendeley</a>
+			<a href="/login" ng-if="!logged_in"><img src="img/mendeley.png" width="25"> Login with Mendeley</a>
 			<div ng-if="logged_in">
 				<h2 ng-bind="name"></h2>
 				<!--<form>
@@ -143,8 +129,9 @@
 				Results <i class="pull-right glyphicon" ng-class="{'glyphicon-chevron-down': results_opened, 'glyphicon-chevron-right': !results_opened}"></i>
 			</uib-accordion-heading>
 			<div ng-show="processing">
-				<label>Processing... Please wait a couple of minutes.</label>
+				<label>The authors of the article are being disambiguated. This process might take a couple minutes.</label>
 				<button class="btn btn-danger pull-right" ng-click="cancel()">Cancel</button>
+				<br>
 				<br>
 				<br>
 				<uib-progressbar class="progress-striped active" value="progress" type="info"></uib-progressbar>
@@ -163,7 +150,7 @@
 							<td>
 							<ul class="results">
 								<li ng-repeat="result in results[key]">
-									{{result.title}} ({{result.author}})
+									{{result.title}} <span ng-if="result.doi">(DOI: {{result.doi}}) </span>[{{result.author}}]
 								</li>
 							</ul>
 						</td>

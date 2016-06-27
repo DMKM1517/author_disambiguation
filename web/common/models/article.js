@@ -16,6 +16,7 @@ module.exports = function(Article) {
 			let title = article.title,
 				journal = article.journal || '',
 				year = article.year || null,
+				doi = article.doi || '',
 				query = `
 				select greatest(900000, max(id))+1 as id from source.articles;
 				select max(processid)+1 as process_id from source.articles`
@@ -27,7 +28,7 @@ module.exports = function(Article) {
 						process_id = results[1].process_id;
 					query = `
 						insert into source.articles
-						values (${process_id}, ${id}, '${title}', '${journal}', null, null, ${year});
+						values (${process_id}, ${id}, '${title}', '${journal}', null, '${doi}', ${year});
 						`;
 					for (let i in article.authors) {
 						let author = article.authors[i];

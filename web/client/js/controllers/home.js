@@ -86,6 +86,9 @@ App.controller('HomeController', ['$scope', '$cookies', '$state', '$http', funct
 		if (doc.source) {
 			$scope.article.journal = doc.source;
 		}
+		if (doc.identifiers && doc.identifiers.doi) {
+			$scope.article.doi = doc.identifiers.doi;
+		}
 		if (doc.year) {
 			$scope.article.year = doc.year;
 		}
@@ -153,6 +156,7 @@ App.controller('HomeController', ['$scope', '$cookies', '$state', '$http', funct
 					let process_id = resp.data.process_id;
 					console.log(process_id);
 					$scope.progress += prog_step;
+					$scope.mendeley_opened = false;
 					$scope.results_opened = true;
 					socket.emit('process', process_id);
 				} else {
@@ -194,7 +198,7 @@ App.controller('HomeController', ['$scope', '$cookies', '$state', '$http', funct
 		$scope.$apply();
 	});
 	socket.on('results', function(results) {
-		console.log(results);
+		// console.log(results);
 		$scope.processing = false;
 		let disambiguated = JSON.parse(results);
 		$scope.results = disambiguated;
