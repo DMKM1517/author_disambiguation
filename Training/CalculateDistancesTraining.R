@@ -558,7 +558,7 @@ if(is.null(this.dir)){
 
 #assigns the current focus name to cluster
 focusName <-  "RS"
-testing <- FALSE
+testing <- TRUE
 
 # Gets the connection from the DB
 con <- getDBConnection()
@@ -571,8 +571,8 @@ queryFN <- "
     from :DISAMBIGUATED:.articles_authors
     group by focus_name
     order by count(focus_name) desc
-    limit 8
-    offset 100"
+    --limit 8
+    --offset 100"
 
 # Replace the focus name and the environment if neccesary
 if(testing){
@@ -588,36 +588,36 @@ head(focusNames, n = 20)
 #Truncate all the distance tables
 # truncateDistanceTables(con)
 
-# #setup parallel backend to use 8 processors
-# cl<-makeCluster(detectCores() - 1)
-# registerDoParallel(cl)
-#
-# #Parallel Loop
-# strt<-Sys.time()
-# ls<-foreach(
-#     focusName = focusNames[,1],
-#     .packages = c("stringr","RPostgreSQL","reshape2","vegan","tm","splitstackshape","foreach","doParallel", "rjson")) %dopar% {
-#     
-#     conIter <- getDBConnection()
-# 
-#     calculateDistancesForFocusName(con = conIter, testing = testing, focusName = focusName)
-#     dbDisconnect(conIter)
-#     # dbUnloadDriver(drvIter)
-# }
-# dbDisconnect(con)
-# # dbUnloadDriver(drv)
-# print("Parallel Loop Duration:")
-# print(Sys.time()-strt)
-# stopCluster(cl)
+#setup parallel backend to use 8 processors
+cl<-makeCluster(detectCores() - 1)
+registerDoParallel(cl)
 
-
+#Parallel Loop
 strt<-Sys.time()
-print("Loop Duration:")
-for(focusName in focusNames[,1]) {
-    # Call the main function that calculates all the distances
-    calculateDistancesForFocusName(con = con, testing = testing, focusName = focusName)
+ls<-foreach(
+    focusName = focusNames[,1],
+    .packages = c("stringr","RPostgreSQL","reshape2","vegan","tm","splitstackshape","foreach","doParallel", "rjson")) %dopar% {
+
+    conIter <- getDBConnection()
+
+    calculateDistancesForFocusName(con = conIter, testing = testing, focusName = focusName)
+    dbDisconnect(conIter)
+    # dbUnloadDriver(drvIter)
 }
+dbDisconnect(con)
+# dbUnloadDriver(drv)
+print("Parallel Loop Duration:")
 print(Sys.time()-strt)
+stopCluster(cl)
+
+
+# strt<-Sys.time()
+# print("Loop Duration:")
+# for(focusName in focusNames[,1]) {
+#     # Call the main function that calculates all the distances
+#     calculateDistancesForFocusName(con = con, testing = testing, focusName = focusName)
+# }
+# print(Sys.time()-strt)
 
 #Close connection
 dbDisconnect(con)
