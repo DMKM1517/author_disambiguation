@@ -96,4 +96,3 @@ This schema contains the main information of the application:
  - `main.v_authors_distance`: View that aggregates the different distances between a pair of signatures.
  - `main.same_authors`: Table that contains the result of calculating if a pair of authors are the same or not.
  - `main.authors_disambiguated`: Table that contains the result of disambiguating and clustering the authors of the application.
-

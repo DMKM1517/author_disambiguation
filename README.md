@@ -8,6 +8,4 @@ A web application was also developed as the result of a Case Study Project based
 
 **ADD THE VIDEO**
 
-For more information please refer to our GitHub repository (with the link there). If you want to test the application, or you have any other question, please contact us to [dmkm.author.disambiguation@gmail.com](dmkm.author.disambiguation@gmail.com).
-
-
+For more information please check the technical documentation [here](http://author-disambiguation.readthedocs.io/en/latest/). If you want to test the application, or you have any other question, please contact us to [dmkm.author.disambiguation@gmail.com](dmkm.author.disambiguation@gmail.com).
