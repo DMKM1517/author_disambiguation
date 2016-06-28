@@ -36,15 +36,8 @@ Now, make the database accesible:
 Create a user and the database:
 
  - `psql`
- - `create user dmkm with password '<password>';`
- - `create database ArticlesDB with owner dmkm encoding 'UTF8';`
-
-Install the extension Unaccent (used for searching):
-
- - `sudo su - postgres`
- - `psql -d ArticlesDB`
- - `CREATE EXTENSION unaccent;`
- - `SELECT unaccent('H�tel');`
+ - `create user <user> with password '<password>';`
+ - `create database <database> with owner <user> encoding 'UTF8';`
 
 
 ### Database Schema Definition

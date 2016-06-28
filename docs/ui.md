@@ -7,7 +7,7 @@ The versions are:
 
  - NodeJS: 4.4.1
  - PostgreSQL: 9.5
- - For the frameworks and other libraries, check the files `package.json` and `index.html`
+ - For the frameworks and other libraries, check the files `package.json` and `client/index.html`
 
 ## Structure
 
@@ -56,15 +56,15 @@ Some comments about the structure:
 
  - The `client` folder contains the client side logic. 
 	 - It is a simple Angular application, with the main file `app.js` and the controllers.
-	 - There is a folder containing the Mendeley Javascript SDK.
+	 - There is a folder inside `vendor` containing the Mendeley Javascript SDK.
 	 - There are other libraries loaded via CDN.
  - There is only one model: the Articles.
  - The `server` folder is the server side logic.
 	 - The `boot/routes.js` file contains the routes mainly for login with Mendeley.
-	 - The `datasources.json` file is empty with just the schema in order to use the `datasources.local.js`
+	 - The `datasources.json` file is empty with just the schema in order to use the `datasources.local.js`.
 	 - The `datasources.local.js` file reads the file `db_login.json` from the directory of the project (above the `web`) and creates the connection.
 	 - In the `server.js` file, the app starts using [socket.io](http://socket.io/) to update the status of the process.
- - The `config.json` file contains the Mendeley API key.
+ - The `config.json` file contains the Mendeley API key. This can be obtained in the [development website of Mendeley](http://dev.mendeley.com/myapps.html).
 	 - `clientId`: Id of 4 numbers
 	 - `clientSecret`: secret string
 	 - `localhostUrl`: base domain to redirect
@@ -78,7 +78,7 @@ Some comments about the structure:
  2. Send the form asynchronously
 	 - The server inserts the data in the corresponding tables
 	 - It returns the Process ID
- 3. The client emits the event to start processing with the Process ID
+ 3. The client emits the event to start processing the article with the Process ID
  4. The server creates a child process to run Rscript
 	 - It runs the main script `Operational/Process_Web_Article.R`
 	 - It emits the relevant output
@@ -139,10 +139,6 @@ Install NodeJS downloading from its [site](https://nodejs.org/en/download/) or:
 	 - `curl --silent --location https://rpm.nodesource.com/setup_4.x | bash -`
 	 - `yum -y install nodejs`
 
-Install StrongLoop
-
- - `sudo npm install -g strongloop`
-
 Install PM2
 
  - `sudo npm install -g pm2`
@@ -172,3 +168,4 @@ Install PM2
 	`pm2 restart web`
 	 - Check the logs
 		`pm2 logs web`
+
