@@ -12,7 +12,7 @@ After the user has filled the form with all the information of the article to pr
 
 The following video presents is a demo of the functionality of the application.
 
-**ADD THE VIDEO**
+[![Automated Author Disambiguation](video_thumbnail.PNG)](https://youtu.be/DnTLwGgfwsg "Automated Author Disambiguation")
 
 For more information please refer to our GitHub repository (with the link there). If you want to test the application, or you have any other question, please contact us to [dmkm.author.disambiguation@gmail.com](dmkm.author.disambiguation@gmail.com).
 

@@ -6,6 +6,6 @@ The article ​**Ekaterina Bastrakova, Rodney Ledesma, & Jose Millan. (2016). Au
 
 A web application was also developed as the result of a Case Study Project based on this work. The following video is a demo of the application.
 
-**ADD THE VIDEO**
+[![Automated Author Disambiguation](docs/video_thumbnail.PNG)](https://youtu.be/DnTLwGgfwsg "Automated Author Disambiguation")
 
 For more information please check the technical documentation [here](http://author-disambiguation.readthedocs.io/en/latest/). If you want to test the application, or you have any other question, please contact us to [dmkm.author.disambiguation@gmail.com](dmkm.author.disambiguation@gmail.com).
