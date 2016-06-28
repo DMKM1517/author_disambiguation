@@ -164,7 +164,7 @@ Install PM2
  - On the github directory
 	 - `git pull`
 	 - (make any modifications if needed)
- - Restart the server
+ - If the changes were in the server side, restart the server
 	`pm2 restart web`
 	 - Check the logs
 		`pm2 logs web`
