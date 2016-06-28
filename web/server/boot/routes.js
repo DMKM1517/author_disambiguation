@@ -110,14 +110,16 @@ from
 	left join main.articles_authors aa2 on sa.id2 = aa2.id and sa.d2 = aa2.d
 	left join source.articles a2 on sa.id2 = a2.id
 where
-	a.processid = 10014
+	a.processid = 10007
 	and sa.same is true
 order by aa1.id, aa1.d, aa2.id, aa2.d
 limit 500;
             	`;
             app.dataSources.ArticlesDB.connector.execute(query, function(err, results) {
-              let disambiguated = [];
-              for (let i = 0; i < new Set(results.map(x => x.d1)).size; i++) {
+              let disambiguated = [],
+              positions = Array.from(new Set(results.map(x => x.d1))),
+              max_pos = Math.max.apply(Math, positions);
+              for (let i = 0; i<=max_pos; i++) {
                 disambiguated.push(results.filter(x => x.d1 == i));
               }
               res.json(disambiguated);
