@@ -24,6 +24,7 @@ module.exports = function(Article) {
 				if (error) {
 					cb(error);
 				} else {
+                    cb(new Error(title));
 					let id = results[0].id,
 						process_id = results[1].process_id;
 					query = `
