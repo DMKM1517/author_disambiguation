@@ -31,29 +31,32 @@ module.exports = function(Article) {
 						values (${process_id}, ${id}, '${title}', '${journal}', null, '${doi}', ${year});
 						`;
 					for (let i in article.authors) {
-						let author = _escapeString(article.authors[i]);
+						let author = article.authors[i],
+							first_name = _escapeString(author.first_name),
+							middle_name = _escapeString(author.middle_name),
+							last_name = _escapeString(author.last_name);
 						query += `
 							insert into source.signatures 
-							values (${id}, ${i}, '${author.first_name}', '${author.first_name.substr(0,1)}', '${author.middle_name.substr(0,1)}', '${author.last_name}', '${author.middle_name}');
+							values (${id}, ${i}, '${first_name}', '${first_name.substr(0,1)}', '${middle_name.substr(0,1)}', '${last_name}', '${middle_name}');
 							`;
 					}
 					for (let keyword of article.keywords) {
-                        keyword_clean = _escapeString(keyword)
+						let keyword_clean = _escapeString(keyword);
 						query += `
 							insert into source.keywords
 							values (${id}, 'WEB', '${keyword_clean}');
 							`;
 					}
 					for (let subject of article.subjects) {
-                        subject_clean = _escapeString(subject)
+						let subject_clean = _escapeString(subject);
 						query += `
 							insert into source.subjects
 							values (${id}, '${subject_clean}');
 							`;
 					}
 					for (let reference of article.references) {
-                        ref_journal_clean = _escapeString(reference.journal)
-                        ref_title_clean = _escapeString(reference.title)
+						let ref_journal_clean = _escapeString(reference.journal);
+						let ref_title_clean = _escapeString(reference.title);
 						query += `
 							insert into source."references" (id, journal, title)
 							values (${id}, '${ref_journal_clean}', '${ref_title_clean}');
@@ -81,30 +84,30 @@ module.exports = function(Article) {
 			type: 'number'
 		}
 	});
-    var _escapeString = function (val) {
-        val = val.replace(/[\0\n\r\b\t\\'"\x1a]/g, function (s) {
-        switch (s) {
-          case "\0":
-            return "\\0";
-          case "\n":
-            return "\\n";
-          case "\r":
-            return "\\r";
-          case "\b":
-            return "\\b";
-          case "\t":
-            return "\\t";
-          case "\x1a":
-            return "\\Z";
-          case "'":
-            return "''";
-          case '"':
-            return '""';
-          default:
-            return "\\" + s;
-        }
-        });
+	var _escapeString = function(val) {
+		val = val.replace(/[\0\n\r\b\t\\'"\x1a]/g, function(s) {
+			switch (s) {
+				case "\0":
+					return "\\0";
+				case "\n":
+					return "\\n";
+				case "\r":
+					return "\\r";
+				case "\b":
+					return "\\b";
+				case "\t":
+					return "\\t";
+				case "\x1a":
+					return "\\Z";
+				case "'":
+					return "''";
+				case '"':
+					return '""';
+				default:
+					return "\\" + s;
+			}
+		});
 
-        return val;
-    };
+		return val;
+	};
 };
