@@ -15,7 +15,7 @@ module.exports = function(Article) {
 		} else {
 			let title = _escapeString(article.title),
 				journal = _escapeString(article.journal) || '',
-				year = _escapeString(article.year) || null,
+				year = article.year || null,
 				doi = _escapeString(article.doi) || '',
 				query = `
 				select greatest(900000, max(id))+1 as id from source.articles;
