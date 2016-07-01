@@ -1,11 +1,11 @@
-site_name: Author Disambiguation
+site_name: Automated Author Disambiguation
 repo_url: https://github.com/DMKM1517/author_disambiguation
 site_author: DMKM1517
 pages:
 - Home: index.md
 - 'Database Installation & Description': db.md
-- 'Training/Testing Script Descriptions': tt_scripts.md
 - 'Web Application Installation': ui.md
+- 'Training/Testing Script Descriptions': tt_scripts.md
 - 'Operational Script Descriptions': op_scripts.md
 
 theme: readthedocs

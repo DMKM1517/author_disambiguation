@@ -4,7 +4,7 @@ Author disambiguation is an open issue in the world of academic digital librarie
 
 The article ​**Ekaterina Bastrakova, Rodney Ledesma, & Jose Millan. (2016). Author Disambiguation. University Lumiere Lyon 2**​ can be found [here](Documents/AuthorDisambiguation_Bastrakova-Ledesma_Millan.pdf)
 
-A web application was developed as the result of a Case Study Project based on this work. A virtual machine containing the self contained web application can be found **here**.
+A web application was developed as the result of a Case Study Project based on this work. A virtual machine containing the self contained web application can be found [here](https://drive.google.com/open?id=0B6KTAg5PeVuiQ0xhaGtRTFhnd2M).
 
 The application allows the user to fill the information of any article in order to disambiguate its signatures and find what other articles were written by the same author. In order to facilitate this process, the application offers the option to connect the users [Mendeley](http://mendeley.com/) account (by taking advantage of the [API offered by Mendeley](http://dev.mendeley.com/)), so he can select an specific article within his own library and import the information of the article automatically to the form.
 
